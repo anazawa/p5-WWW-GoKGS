@@ -1,0 +1,124 @@
+NAME
+    WWW::GoKGS - KGS Go Server Scraper
+
+SYNOPSIS
+      use WWW::GoKGS;
+
+      my $gokgs = WWW::GoKGS->new;
+
+      # List of tournaments 
+      my $tournList1 = $gokgs->scrape( '/tournList.jsp?year=2014' );
+      my $tournList2 = $gokgs->tourn_list->query( year => 2014 );
+
+      # Information for the tournament
+      my $tournInfo1 = $gokgs->scrape( '/tournInfo.jsp?id=123' );
+      my $tournInfo2 = $gokgs->tourn_info->query( id => 123 );
+
+      # Tournament entrants
+      my $tournEntrants1 = $gokgs->scrape( '/tournEntrans.jsp?id=123&sort=n' );
+      my $tournEntrants2 = $gokgs->tourn_entrants->query( id => 123, sort => 'n' );
+
+      # Tournament games
+      my $tournGames1 = $gokgs->scrape( '/tournGames.jsp?id=123&round=1' );
+      my $tournGames2 = $gokgs->tourn_games->query( id => 123, round => 1 );
+
+DESCRIPTION
+  ATTRIBUTES
+    All of the following attributes are read-only:
+
+    $gokgs->user_agent
+        Returns an LWP::UserAgent object which is used to "GET" the
+        requested resource.
+
+          my $user_agent = LWP::UserAgent->new(
+              agent => 'MyApp/1.00',
+          );
+
+          my $gokgs = WWW::GoKGS->new(
+              user_agent => $user_agent,
+          );
+
+    $gokgs->html_filter
+        Returns an HTML filter. Defaults to an anonymous subref which does
+        nothing ("sub {}").
+
+          my $gokgs = WWW::GoKGS->new(
+              html_filter => sub {
+                  my $html = shift;
+                  $html =~ s/<.*?>//g; # strip HTML tags
+                  $html;
+              },
+          );
+
+        See Web::Scraper::Filters for details.
+
+    $gokgs->date_filter
+        Returns a date filter. Defaults to an anonymous subref which does
+        nothing ("sub {}").
+
+          use Time::Piece qw/gmtime/;
+
+          my $gokgs = WWW::GoKGS->new(
+              date_filter => sub {
+                  my $date = shift; # => "5/17/14 7:05 PM"
+                  gmtime->strptime( $date, '%D %I:%M %p' );
+              },
+          );
+
+        See Web::Scraper::Filters for details.
+
+    $gokgs->tourn_list
+        Returns a WWW::GoKGS::Scraper::TournList object.
+
+    $gokgs->tourn_info
+        Returns a WWW::GoKGS::Scraper::TournInfo object.
+
+    $gokgs->tourn_entrants
+        Returns a WWW::GoKGS::Scraper::TournEntrants object.
+
+    $gokgs->tourn_games
+        Returns a WWW::GoKGS::Scraper::TournGames object.
+
+  METHODS
+    $tournList = $gokgs->scrape( '/tournList.jsp?year=2014' )
+    $tournList = $gokgs->scrape(
+    'http://www.gokgs.com/tournList.jsp?year=2014' )
+        A shortcut for:
+
+          my $uri = URI->new( 'http://www.gokgs.com/tournList.jsp?year=2014' );
+          my $tournList = $gokgs->tourn_list->scrape( $uri );
+
+    $tournInfo = $gokgs->scrape( '/tournInfo.jsp?id=123' )
+    $tournInfo = $gokgs->scrape( 'http://www.gokgs.com/tournInfo.jsp?id=123'
+    )
+        A shortcut for:
+
+          my $uri = URI->new( 'http://www.gokgs.com/tournInfo.jsp?id=123' );
+          my $tournInfo = $gokgs->tourn_info->scrape( $uri );
+
+    $tournEntrants = $gokgs->scrape( '/tournEntrants.jsp?id=123&s=n' )
+    $tournEntrants = $gokgs->scrape(
+    'http://www.gokgs.com/tournEntrants.jsp?id=123&s=n' )
+        A shortcut for:
+
+          my $uri = URI->new( 'http://www.gokgs.com/tournEntrants.jsp?id=123&s=n' );
+          my $tournEntrants = $gokgs->tourn_entrants->scrape( $uri );
+
+    $tournGames = $gokgs->scrape( '/tournGames.jsp?id=123&round=1' )
+    $tournGames = $gokgs->scrape(
+    'http://www.gokgs.com/tournGames.jsp?id=123&round=1' )
+        A shortcut for:
+
+          my $uri = URI->new( 'http://www.gokgs.com/tournGames.jsp?id=123&round=1' );
+          my $tournGames = $gokgs->tourn_games->scrape( $uri );
+
+SEE ALSO
+    Web::Scraper
+
+AUTHOR
+    Ryo Anazawa (anazawa@cpan.org)
+
+LICENSE
+    This module is free software; you can redistribute it and/or modify it
+    under the same terms as Perl itself. See perlartistic.
+

@@ -12,6 +12,7 @@ subtest 'WWW::GoKGS::Scraper::TournList' => sub {
     my $tourn_list = WWW::GoKGS::Scraper::TournList->new;
     isa_ok $tourn_list, 'WWW::GoKGS::Scraper::TournList';
     is $tourn_list->base_uri, 'http://www.gokgs.com/tournList.jsp';
+    isa_ok $tourn_list->user_agent, 'LWP::UserAgent';
     can_ok $tourn_list, qw( scrape query );
 };
 
@@ -21,6 +22,7 @@ subtest 'WWW::GoKGS::Scraper::TournInfo' => sub {
     is $tourn_info->base_uri, 'http://www.gokgs.com/tournInfo.jsp';
     isa_ok $tourn_info->date_filter, 'CODE';
     isa_ok $tourn_info->html_filter, 'CODE';
+    isa_ok $tourn_info->user_agent, 'LWP::UserAgent';
     can_ok $tourn_info, qw( scrape query );
 };
 
@@ -29,6 +31,7 @@ subtest 'WWW::GoKGS::Scraper::TournEntrants' => sub {
     isa_ok $tourn_entrants, 'WWW::GoKGS::Scraper::TournEntrants';
     is $tourn_entrants->base_uri, 'http://www.gokgs.com/tournEntrants.jsp';
     isa_ok $tourn_entrants->date_filter, 'CODE';
+    isa_ok $tourn_entrants->user_agent, 'LWP::UserAgent';
     can_ok $tourn_entrants, qw( scrape query );
 };
 
@@ -37,6 +40,7 @@ subtest 'WWW::GoKGS::Scraper::TournGames' => sub {
     isa_ok $tourn_games, 'WWW::GoKGS::Scraper::TournGames';
     is $tourn_games->base_uri, 'http://www.gokgs.com/tournGames.jsp';
     isa_ok $tourn_games->date_filter, 'CODE';
+    isa_ok $tourn_games->user_agent, 'LWP::UserAgent';
     can_ok $tourn_games, qw( scrape query );
 };
 
@@ -54,6 +58,6 @@ subtest 'WWW::GoKGS' => sub {
     can_ok $gokgs, qw( scrape );
 
     throws_ok {
-        $gokgs->scrape('fooBar.jsp')
+        $gokgs->scrape('fooBar.jsp');
     } qr{^Don't know how to scrape 'fooBar\.jsp'};
 };
