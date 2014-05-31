@@ -5,6 +5,7 @@ use warnings;
 use Carp qw/croak/;
 use LWP::UserAgent;
 use URI;
+use WWW::GoKGS::Scraper::GameArchives;
 use WWW::GoKGS::Scraper::Top100;
 use WWW::GoKGS::Scraper::TournEntrants;
 use WWW::GoKGS::Scraper::TournGames;
@@ -20,11 +21,11 @@ sub new {
 }
 
 sub date_filter {
-    $_[0]->{date_filter} ||= sub {};
+    $_[0]->{date_filter} ||= sub { $_[0] };
 }
 
 sub html_filter {
-    $_[0]->{html_filter} ||= sub {};
+    $_[0]->{html_filter} ||= sub { $_[0] };
 }
 
 sub user_agent {
@@ -49,7 +50,13 @@ sub _build_scraper {
     my $self = shift;
 
     +{ map { $_->base_uri->path => $_ } (
-        WWW::GoKGS::Scraper::Top100->new,
+        WWW::GoKGS::Scraper::GameArchives->new(
+            user_agent  => $self->user_agent,
+            date_filter => $self->date_filter,
+        ),
+        WWW::GoKGS::Scraper::Top100->new(
+            user_agent => $self->user_agent,
+        ),
         WWW::GoKGS::Scraper::TournList->new(
             user_agent => $self->user_agent,
         ),
@@ -67,6 +74,10 @@ sub _build_scraper {
             date_filter => $self->date_filter,
         ),
     )};
+}
+
+sub game_archives {
+    $_[0]->_scraper->{'/gameArchives.jsp'};
 }
 
 sub top_100 {
