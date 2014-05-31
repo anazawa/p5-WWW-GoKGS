@@ -2,6 +2,7 @@ package WWW::GoKGS;
 use 5.008_009;
 use strict;
 use warnings;
+use Carp qw/croak/;
 use LWP::UserAgent;
 use URI;
 use WWW::GoKGS::Scraper::TournEntrants;
@@ -83,18 +84,19 @@ sub tourn_games {
 }
 
 sub scrape {
-    my ( $self, $stuff ) = @_;
+    my $self = shift;
+    my $stuff = defined $_[0] ? shift : q{};
 
-    my $url = URI->new( "$stuff" );
+    my $url = URI->new( $stuff );
        $url->authority( 'www.gokgs.com' ) unless $url->authority;
        $url->scheme( 'http' ) unless $url->scheme;
 
-    my $scraper = $url =~ m{^https?://www\.gokgs\.com(?:\:80)?/} && $url->path;
+    my $scraper = $url =~ m{^https?://www\.gokgs\.com/} && $url->path;
        $scraper = $self->_scraper->{$scraper} if $scraper;
 
-    warn "Don't know how to scrape '$stuff'" unless $scraper;
+    croak "Don't know how to scrape '$stuff'" unless $scraper;
 
-    $scraper && $scraper->scrape( $url );
+    $scraper->scrape( $url );
 }
 
 1;

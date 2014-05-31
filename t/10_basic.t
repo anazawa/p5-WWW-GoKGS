@@ -1,5 +1,6 @@
 use strict;
 use warnings;
+use Test::Exception;
 use Test::More tests => 5;
 use WWW::GoKGS;
 use WWW::GoKGS::Scraper::TournList;
@@ -41,6 +42,7 @@ subtest 'WWW::GoKGS::Scraper::TournGames' => sub {
 
 subtest 'WWW::GoKGS' => sub {
     my $gokgs = WWW::GoKGS->new;
+
     isa_ok $gokgs, 'WWW::GoKGS';
     isa_ok $gokgs->user_agent, 'LWP::UserAgent';
     isa_ok $gokgs->date_filter, 'CODE';
@@ -50,4 +52,8 @@ subtest 'WWW::GoKGS' => sub {
     isa_ok $gokgs->tourn_entrants, 'WWW::GoKGS::Scraper::TournEntrants';
     isa_ok $gokgs->tourn_games, 'WWW::GoKGS::Scraper::TournGames';
     can_ok $gokgs, qw( scrape );
+
+    throws_ok {
+        $gokgs->scrape('fooBar.jsp')
+    } qr{^Don't know how to scrape 'fooBar\.jsp'};
 };
