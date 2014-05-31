@@ -6,7 +6,12 @@ use Carp qw/croak/;
 sub new {
     my $class = shift;
     my %args = @_ == 1 ? %{$_[0]} : @_;
-    bless \%args, $class;
+    my $user_agent = delete $args{user_agent};
+    my $self = bless { %args }, $class;
+
+    $self->user_agent( $user_agent ) if $user_agent;
+
+    $self;
 }
 
 sub base_uri {
