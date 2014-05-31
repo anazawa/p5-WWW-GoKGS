@@ -1,12 +1,21 @@
 use strict;
 use warnings;
 use Test::Exception;
-use Test::More tests => 5;
+use Test::More tests => 6;
 use WWW::GoKGS;
+use WWW::GoKGS::Scraper::Top100;
 use WWW::GoKGS::Scraper::TournList;
 use WWW::GoKGS::Scraper::TournInfo;
 use WWW::GoKGS::Scraper::TournEntrants;
 use WWW::GoKGS::Scraper::TournGames;
+
+subtest 'WWW::GoKGS::Scraper::Top100' => sub {
+    my $top_100 = WWW::GoKGS::Scraper::Top100->new;
+    isa_ok $top_100, 'WWW::GoKGS::Scraper::Top100';
+    is $top_100->base_uri, 'http://www.gokgs.com/top100.jsp';
+    isa_ok $top_100->user_agent, 'LWP::UserAgent';
+    can_ok $top_100, qw( scrape query );
+};
 
 subtest 'WWW::GoKGS::Scraper::TournList' => sub {
     my $tourn_list = WWW::GoKGS::Scraper::TournList->new;
@@ -51,6 +60,7 @@ subtest 'WWW::GoKGS' => sub {
     isa_ok $gokgs->user_agent, 'LWP::UserAgent';
     isa_ok $gokgs->date_filter, 'CODE';
     isa_ok $gokgs->html_filter, 'CODE';
+    isa_ok $gokgs->top_100, 'WWW::GoKGS::Scraper::Top100';
     isa_ok $gokgs->tourn_list, 'WWW::GoKGS::Scraper::TournList';
     isa_ok $gokgs->tourn_info, 'WWW::GoKGS::Scraper::TournInfo';
     isa_ok $gokgs->tourn_entrants, 'WWW::GoKGS::Scraper::TournEntrants';
