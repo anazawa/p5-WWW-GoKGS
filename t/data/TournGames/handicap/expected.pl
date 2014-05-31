@@ -173,7 +173,11 @@
     },
     {
       'black' => [],
+      'board_size' => undef,
+      'handicap' => undef,
+      'kifu_uri' => undef,
       'result' => 'Bye (No show)',
+      'start_time' => undef,
       'white' => [
         {
           'name' => 'Hushfield',
@@ -183,7 +187,11 @@
     },
     {
       'black' => [],
+      'board_size' => undef,
+      'handicap' => undef,
+      'kifu_uri' => undef,
       'result' => 'Bye',
+      'start_time' => undef,
       'white' => [
         {
           'name' => 'Lim',
@@ -193,7 +201,11 @@
     },
     {
       'black' => [],
+      'board_size' => undef,
+      'handicap' => undef,
+      'kifu_uri' => undef,
       'result' => 'Bye (Requested)',
+      'start_time' => undef,
       'white' => [
         {
           'name' => 'SWKushiro',
@@ -203,7 +215,11 @@
     },
     {
       'black' => [],
+      'board_size' => undef,
+      'handicap' => undef,
+      'kifu_uri' => undef,
       'result' => 'Bye (No show)',
+      'start_time' => undef,
       'white' => [
         {
           'name' => 'Dore',
@@ -213,7 +229,11 @@
     },
     {
       'black' => [],
+      'board_size' => undef,
+      'handicap' => undef,
+      'kifu_uri' => undef,
       'result' => 'Bye (No show)',
+      'start_time' => undef,
       'white' => [
         {
           'name' => 'stephane',
@@ -223,7 +243,11 @@
     },
     {
       'black' => [],
+      'board_size' => undef,
+      'handicap' => undef,
+      'kifu_uri' => undef,
       'result' => 'Bye (No show)',
+      'start_time' => undef,
       'white' => [
         {
           'name' => 'orthrus',
@@ -233,7 +257,11 @@
     },
     {
       'black' => [],
+      'board_size' => undef,
+      'handicap' => undef,
+      'kifu_uri' => undef,
       'result' => 'Bye (No show)',
+      'start_time' => undef,
       'white' => [
         {
           'name' => 'pyhtam',
@@ -243,7 +271,11 @@
     },
     {
       'black' => [],
+      'board_size' => undef,
+      'handicap' => undef,
+      'kifu_uri' => undef,
       'result' => 'Bye (No show)',
+      'start_time' => undef,
       'white' => [
         {
           'name' => 'kaii',
@@ -253,7 +285,11 @@
     },
     {
       'black' => [],
+      'board_size' => undef,
+      'handicap' => undef,
+      'kifu_uri' => undef,
       'result' => 'Bye (Requested)',
+      'start_time' => undef,
       'white' => [
         {
           'name' => 'waynec',
@@ -263,7 +299,11 @@
     },
     {
       'black' => [],
+      'board_size' => undef,
+      'handicap' => undef,
+      'kifu_uri' => undef,
       'result' => 'Bye (No show)',
+      'start_time' => undef,
       'white' => [
         {
           'name' => 'Kanimal',
@@ -273,7 +313,11 @@
     },
     {
       'black' => [],
+      'board_size' => undef,
+      'handicap' => undef,
+      'kifu_uri' => undef,
       'result' => 'Bye (No show)',
+      'start_time' => undef,
       'white' => [
         {
           'name' => 'psygo',
@@ -283,7 +327,11 @@
     },
     {
       'black' => [],
+      'board_size' => undef,
+      'handicap' => undef,
+      'kifu_uri' => undef,
       'result' => 'Bye (No show)',
+      'start_time' => undef,
       'white' => [
         {
           'name' => 'EachOne',
@@ -293,7 +341,11 @@
     },
     {
       'black' => [],
+      'board_size' => undef,
+      'handicap' => undef,
+      'kifu_uri' => undef,
       'result' => 'Bye (No show)',
+      'start_time' => undef,
       'white' => [
         {
           'name' => 'ooo',
@@ -439,6 +491,5 @@
   },
   'name' => 'March Iron Man Tournament: Kyu Handicap Division',
   'next_round' => bless( do{\(my $o = 'http://www.gokgs.com/tournGames.jsp?id=878&round=2')}, 'URI::http' ),
-  'round' => '1',
-  'time_zone' => 'GMT'
+  'round' => '1'
 }

@@ -10,41 +10,45 @@ sub _build_base_uri {
     URI->new('http://www.gokgs.com/tournEntrants.jsp');
 }
 
-sub date_filter {
-    my $self = shift;
-    $self->{date_filter} = shift if @_;
-    $self->{date_filter} ||= sub { $_[0] };
-}
-
 sub _build_scraper {
     my $self = shift;
+    my $entrant_name = sub { s/ \[[^\]]+\]$// };
+    my $entrant_rank = sub { m/ \[([^\]]+)\]$/ ? $1 : undef };
+    my $tournament_name = sub { s/ Players$// };
 
     scraper {
-        process '//h1', 'name' => [ 'TEXT', sub { s/ Players$// } ];
+        process '//h1', 'name' => [ 'TEXT', $tournament_name ];
         process '//table[tr/th[1]/text()="Position"]//following-sibling::tr',
                 'entrants[]' => scraper {
                     process '//td[1]', 'position' => 'TEXT';
-                    process '//td[2]', 'name' => [ 'TEXT', \&_name ];
-                    process '//td[2]', 'rank' => [ 'TEXT', \&_rank ];
+                    process '//td[2]', 'name' => [ 'TEXT', $entrant_name ];
+                    process '//td[2]', 'rank' => [ 'TEXT', $entrant_rank ];
                     process '//td[3]', 'score' => 'TEXT';
                     process '//td[4]', 'sos' => 'TEXT';
                     process '//td[5]', 'sodos' => 'TEXT';
                     process '//td[6]', 'notes' => 'TEXT'; };
         process '//table[tr/th[1]/text()="Name"]//following-sibling::tr',
                 'entrants[]' => scraper {
-                    process '//td[1]', 'name' => [ 'TEXT', \&_name ];
-                    process '//td[1]', 'rank' => [ 'TEXT', \&_rank ];
+                    process '//td[1]', 'name' => [ 'TEXT', $entrant_name ];
+                    process '//td[1]', 'rank' => [ 'TEXT', $entrant_rank ];
                     process '//td[2]', 'standing' => 'TEXT'; };
         process_links date_filter => $self->date_filter;
     };
 }
 
+sub date_filter {
+    my $self = shift;
+    $self->{date_filter} = shift if @_;
+    $self->{date_filter} ||= sub { $_[0] };
+}
+
 sub scrape {
     my ( $self, @args ) = @_;
     my $result = $self->SUPER::scrape( @args );
-    my $entrants = $result->{entrants} || [];
+    my $entrants = $result->{entrants};
 
-    return $result if @$entrants and !exists $entrants->[0]->{score};
+    return $result unless $entrants;
+    return $result unless exists $entrants->[0]->{score};
 
     my $preceding;
     for my $entrant ( @$entrants ) {
@@ -64,14 +68,6 @@ sub scrape {
     }
 
     $result;
-}
-
-sub _name {
-    s/ \[[^\]]+\]$//;
-}
-
-sub _rank {
-    m/ \[([^\]]+)\]$/ ? $1 : undef;
 }
 
 1;

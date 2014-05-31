@@ -10,31 +10,33 @@ sub _build_base_uri {
     URI->new('http://www.gokgs.com/tournGames.jsp');
 }
 
-sub date_filter {
-    my $self = shift;
-    $self->{date_filter} = shift if @_;
-    $self->{date_filter} ||= sub { $_[0] };
-}
-
 sub _build_scraper {
     my $self = shift;
+    my $round = sub { m/ Round (\d+) Games$/ ? $1 : undef };
+    my $handicap = sub { m/ H(\d+)$/ ? $1 : undef };
+    my $board_size = sub { m/^(\d+)\x{d7}\d+ / ? $1 : undef };
+    my $tournament_name = sub { s/ Round \d+ Games$// };
+
+    my $players = sub {
+        m/^([a-zA-Z0-9]+)(?: \[([^\]]+)\])?$/ 
+            ? [{ name => $1, rank => $2 || q{} }]
+            : q{};
+    };
 
     my $game = scraper {
         process '//td[1]/a', 'kifu_uri' => '@href';
-        process '//td[2]', 'white' => [ 'TEXT', \&_player ];
-        process '//td[3]', 'black' => [ 'TEXT', \&_player ];
+        process '//td[2]', 'white' => [ 'TEXT', $players ];
+        process '//td[3]', 'black' => [ 'TEXT', $players ];
         process '//td[3]', 'maybe_result' => 'TEXT';
-        process '//td[4]', 'board_size' => [ 'TEXT', \&_board_size ];
-        process '//td[4]', 'handicap' => [ 'TEXT', \&_handicap ];
+        process '//td[4]', 'board_size' => [ 'TEXT', $board_size ];
+        process '//td[4]', 'handicap' => [ 'TEXT', $handicap ];
         process '//td[5]', 'start_time' => [ 'TEXT', $self->date_filter ];
         process '//td[6]', 'result' => 'TEXT';
     };
 
     scraper {
-        process '//h1', 'name' => [ 'TEXT', \&_name ];
-        process '//h1', 'round' => [ 'TEXT', \&_round ];
-        process '//table[@class="grid"]//a[@href="tzList.jsp"]',
-                'time_zone' => 'TEXT';
+        process '//h1', 'name' => [ 'TEXT', $tournament_name ];
+        process '//h1', 'round' => [ 'TEXT', $round ];
         process '//table[@class="grid"]//following-sibling::tr',
                 'games[]' => $game;
         process '//a[text()="Previous round"]', 'previous_round' => '@href';
@@ -43,39 +45,32 @@ sub _build_scraper {
     };
 }
 
+sub date_filter {
+    my $self = shift;
+    $self->{date_filter} = shift if @_;
+    $self->{date_filter} ||= sub { $_[0] };
+}
+
 sub scrape {
     my ( $self, @args ) = @_;
     my $result = $self->SUPER::scrape( @args );
+    my $games = $result->{games};
 
-    for my $game ( @{ $result->{games} || [] } ) {
+    return $result unless $games;
+
+    for my $game ( @$games ) {
         my $maybe_result = delete $game->{maybe_result};
-        next if $game->{start_time};
+        next if exists $game->{start_time};
         next unless $maybe_result =~ /^Bye(?: \((?:No show|Requested)\))?$/;
         $game->{result} = $maybe_result;
         $game->{black} = [];
+        $game->{board_size} = undef;
+        $game->{handicap} = undef;
+        $game->{kifu_uri} = undef;
+        $game->{start_time} = undef;
     }
 
     $result;
-}
-
-sub _name {
-    s/ Round \d+ Games$//;
-}
-
-sub _round {
-    m/ Round (\d+) Games$/ && $1;
-}
-
-sub _player {
-    m/^([a-zA-Z0-9]+)(?: \[([^\]]+)\])?$/ && [{ name => $1, rank => $2 }];
-}
-
-sub _board_size {
-    m/^(\d+)\x{d7}\d+ / && $1;
-}
-
-sub _handicap {
-    m/ H(\d+)$/ ? $1 : undef;
 }
 
 1;

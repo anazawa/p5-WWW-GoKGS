@@ -10,6 +10,27 @@ sub _build_base_uri {
     URI->new('http://www.gokgs.com/tournInfo.jsp');
 }
 
+sub _build_scraper {
+    my $self = shift;
+    my $name = sub { s/ \([^)]+\)$// };
+    my $state = sub { m/ \((Not started yet|Aborted)\)$/ ? $1 : q{} };
+
+    my $winners = sub {
+        m/ \((?:Winner|Tie; winners): ([^)]+)\)$/
+            ? [ split /, /, $1 ]
+            : undef;
+    };
+
+    scraper {
+        process '//h1', 'name' => [ 'TEXT', $name ];
+        process '//h1', 'winners' => [ 'TEXT', $winners ];
+        process '//h1', 'state' => [ 'TEXT', $state ];
+        process '//node()[preceding-sibling::h1 and following-sibling::div]',
+                'description[]' => sub { $_[0]->as_XML };
+        process_links date_filter => $self->date_filter;
+    };
+}
+
 sub html_filter {
     my $self = shift;
     $self->{html_filter} = shift if @_;
@@ -22,19 +43,6 @@ sub date_filter {
     $self->{date_filter} ||= sub { $_[0] };
 }
 
-sub _build_scraper {
-    my $self = shift;
-
-    scraper {
-        process '//h1', 'name' => [ 'TEXT', \&_name ];
-        process '//h1', 'winners' => [ 'TEXT', \&_winners ];
-        process '//h1', 'state' => [ 'TEXT', \&_state ];
-        process '//node()[preceding-sibling::h1 and following-sibling::div]',
-                'description[]' => sub { $_[0]->as_XML };
-        process_links date_filter => $self->date_filter;
-    };
-}
-
 sub scrape {
     my ( $self, @args ) = @_;
     my $result = $self->SUPER::scrape( @args );
@@ -44,18 +52,6 @@ sub scrape {
     });
 
     $result;
-}
-
-sub _name {
-    s/ \([^)]+\)$//;
-}
-
-sub _winners {
-    m/ \((?:Winner|Tie; winners): ([^)]+)\)$/ ? [ split /, /, $1 ] : undef;
-}
-
-sub _state {
-    m/ \((Not started yet|Aborted)\)$/ ? $1 : undef;
 }
 
 1;
