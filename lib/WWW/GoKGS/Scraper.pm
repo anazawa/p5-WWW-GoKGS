@@ -82,7 +82,7 @@ This class is an abstract base class for KGS scrapers.
 KGS scrapers must inherit from this class, and also implement two methods;
 C<_build_base_uri> and C<_build_scraper>. C<_build_base_uri> must return
 a L<URI> object which represents a resource on KGS.
-C<_build_scraper> must return an L<Web::Scraper> object to parse
+C<_build_scraper> must return an L<Web::Scraper> object which is used to parse
 the resource.
 
 =head2 ATTRIBUTES
@@ -92,11 +92,13 @@ the resource.
 =item $scraper->base_uri
 
 Returns a L<URI> object which represents a resource on KGS.
+This attribute is read-only.
 
 =item $scraper->user_agent
 
-Can be used to get or set an L<LWP::UserAgent> object to C<GET> the requested
-resource. Defaults to C<$Web::Scraper::UserAgent>.
+Can be used to get or set an L<LWP::UserAgent> object which is used to
+C<GET> the requested resource. Defaults to the C<LWP::UserAgent> object
+shared by L<Web::Scraper> users (C<$Web::Scraper::UserAgent>).
 
 =back
 
@@ -106,10 +108,7 @@ resource. Defaults to C<$Web::Scraper::UserAgent>.
 
 =item $scraper->scrape
 
-The given arguments are passed to L<Web::Scraper>'s C<scrape> method
-and then returns the return value simply.
-
-=item $scraper->query( $k1 => $v1, $k2 => $v2, ... )
+=item $scraper->query
 
 =back
 

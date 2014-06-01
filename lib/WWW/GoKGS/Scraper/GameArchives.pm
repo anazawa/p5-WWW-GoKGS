@@ -123,13 +123,13 @@ __END__
 
 =head1 NAME
 
-WWW::KGS::GameArchives - Interface to KGS Go Server Game Archives
+WWW::GoKGS::Scraper::GameArchives - KGS Game Archives Scraper
 
 =head1 SYNOPSIS
 
-  use WWW::KGS::GameArchives;
-  my $archives = WWW::KGS::GameArchives->new;
-  my $result = $archives->query( user => 'YourAccount' );
+  use WWW::GoKGS::Scraper::GameArchives;
+  my $game_archives = WWW::GoKGS::Scraper::GameArchives->new;
+  my $result = $game_archives->query( user => 'YourAccount' );
 
 =head1 DESCRIPTION
 
@@ -156,16 +156,36 @@ Use at your own risk.
 
 =over 4
 
-=item base_uri
+=item $URI = $game_archives->base_uri
 
 Defaults to C<http://www.gokgs.com/gameArchives.jsp>.
 The value is used to create a request URI by C<query> method.
 The request URI is passed to C<scrape> method.
+This attribute is read-only.
 
-=item user_agent
+=item $LWP_UserAgent = $game_archives->user_agent
 
-This attribute is used to construct a L<Web::Scraper> object
-if a value is set.
+=item $game_archives->user_agent( LWP::UserAgent->new(...) )
+
+Can be used to get or set an L<LWP::UserAgent> object which is used to
+C<GET> the requested resource. Defaults to the C<LWP::UserAgent> object
+shared by L<Web::Scraper> users (C<$Web::Scraper::UserAgent>).
+
+=item $CodeRef = $game_archives->date_filter
+
+=item $game_archives->date_filter( sub { my $date = shift; ... } )
+
+Can be used to get or set a date filter. Defaults to an anonymous subref
+which just returns the given argument (C<sub { $_[0] }>). The callback is
+called with a date string such as C<5/17/14 7:05 PM>.
+The return value is used as the filtered value.
+
+  use Time::Piece qw/gmtime/;
+
+  $game_archives->date_filter(sub {
+      my $date = shift; # => "5/17/14 7:05 PM"
+      gmtime->strptime( $date, '%D %I:%M %p' );
+  });
 
 =back
 
@@ -173,57 +193,49 @@ if a value is set.
 
 =over 4
 
-=item $result = $archives->query( user => 'YourAccount', ... )
+=item $result = $game_archives->query( user => 'YourAccount', ... )
 
 Given key-value pairs of query parameters, returns a hash reference
-which represnets the result.
+which represnets the result. The hashref is formatted as follows:
 
-  my $result = $archives->query(
-      user        => 'foo',
-      year        => '2013',
-      month       => '7',
-      oldAccounts => 'y',
-      tags        => 't',
-  );
-
-The hashref is formatted as follows:
-
-  $result;
-  # => {
-  #     summary => 'Games of KGS player foo, ...',
-  #     games => [ # sorted by "start_time" in descending order
-  #         {
-  #             white => [
-  #                 {
-  #                     name => 'foo [4k]',
-  #                     link => 'http://...&user=foo...'
-  #                 }
-  #             ],
-  #             black => [
-  #                 {
-  #                     name => 'bar [6k]',
-  #                     link => 'http://...&user=bar...'
-  #                 }
-  #             ],
-  #             setup => '19x19 H2',
-  #             start_time => '7/4/13 5:32 AM', # GMT
-  #             type => 'Ranked',
-  #             result => 'W+Res.'
-  #             kifu_uri => 'http://.../games/2013/7/foo-bar.sgf',
-  #         },
-  #         ...
-  #     ],
-  #     zip_uri => 'http://.../foo-2013-7.zip',    # contains SGF files
-  #     tgz_uri => 'http://.../foo-2013-7.tar.gz', # created in July 2013
-  #     calendar => [
-  #         {
-  #             year  => '2011',
-  #             month => 'Jul',
-  #             link  => 'http://...&year=2011&month=7...',
-  #         },
-  #         ...
-  #     ]
-  # }
+  {
+      summary => 'Games of KGS player foo, ...',
+      games => [ # sorted by "start_time" in descending order
+          {
+              kifu_uri => 'http://.../games/2013/7/4/foo-bar.sgf',
+              white => [
+                  {
+                      name => 'foo',
+                      rank => '4k',
+                      link => 'http://...&user=foo...'
+                  }
+              ],
+              black => [
+                  {
+                      name => 'bar',
+                      rank => '6k',
+                      link => 'http://...&user=bar...'
+                  }
+              ],
+              board_size => '19',
+              handicap => '2',
+              start_time => '7/4/13 5:32 AM', # GMT
+              type => 'Ranked',
+              result => 'W+Res.'
+          },
+          ...
+      ],
+      zip_uri => 'http://.../foo-2013-7.zip',    # contains SGF files
+      tgz_uri => 'http://.../foo-2013-7.tar.gz', # created in July 2013
+      calendar => [
+          {
+              year  => '2011',
+              month => 'Jul',
+              link  => 'http://...&year=2011&month=7...',
+          },
+          ...
+      ]
+  }
 
 The possible parameters are as follows:
 
@@ -233,13 +245,13 @@ The possible parameters are as follows:
 
 Represents a KGS username.
 
-  my $result = $archives->query( user => 'foo' );
+  my $result = $game_archives->query( user => 'foo' );
 
 =item year, month
 
 Can be used to search games played in the specified month.
 
-  my $result = $archives->query(
+  my $result = $game_archives->query(
       user  => 'foo',
       year  => '2013',
       month => '7',
@@ -249,7 +261,7 @@ Can be used to search games played in the specified month.
 
 Can be used to search games played by expired and guest accounts.
 
-  my $result = $archives->query(
+  my $result = $game_archives->query(
       user        => 'foo',
       oldAccounts => 'y'
   );
@@ -258,14 +270,14 @@ Can be used to search games played by expired and guest accounts.
 
 Can be used to search games tagged by the specified C<user>.
 
-  my $result = $archives->query(
+  my $result = $game_archives->query(
       user => 'foo',
       tags => 't'
   );
 
 =back
 
-=item $result = $archives->scrape( $stuff )
+=item $result = $game_archives->scrape( $stuff )
 
 The given arguments are passed to L<Web::Scraper>'s C<scrape> method.
 C<query> method is just a wrapper of this method. For example,
@@ -273,15 +285,26 @@ you can pass URIs included by the return value of C<query> method.
 
 =back
 
-=head1 FILTERING VALUES
+=head1 HISTORY
 
-This module doesn't modify the values of C<$result> at all.
-Use L<Moo>'s or L<Mouse>'s C<coerce> to filter values.
-See C<examples/>.
+L<WWW::KGS::GameArchives> was renamed to C<WWW::GoKGS::Scraper::GameArchives>
+(this module).
+The return value of the C<scrape> method (C<$result>) was modified as follows:
+
+  - Rename $game->{editor} to $game->{owner}
+  - Remove $game->{setup}
+  - Add $game->{board_size}
+  - Add $game->{handicap}
+  - $user->{name} is not followed by a rank such as "[2k]"
+  - Add $user->{rank}
+
+where C<$game> represents an element of C<< $result->{games} >>
+and  C<$user> represents C<< $game->{owner} >>, an element of
+C<< $game->{white} >> or an element of C<< $game->{black} >> respectively.
 
 =head1 SEE ALSO
 
-L<Web::Scraper>
+L<WWW::GoKGS>
 
 =head1 AUTHOR
 
@@ -291,3 +314,5 @@ Ryo Anazawa (anazawa@cpan.org)
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself. See L<perlartistic>.
+
+=cut
