@@ -12,16 +12,22 @@ sub _build_base_uri {
 sub _build_scraper {
     my $self = shift;
 
-    my %player = (
+    my $month2num = do {
+        my @months = qw( Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec );
+        my %month2num; @month2num{ @months } = ( 1..12 );
+        sub { $month2num{$_[0]} };
+    };
+
+    my %user = (
         name => [ 'TEXT', sub { s/ \[[^\]]+\]$// } ],
         rank => [ 'TEXT', sub { m/ \[([^\]]+)\]$/ ? $1 : undef } ],
         link => '@href',
     );
 
     my $game = scraper {
-        process '//a[contains(@href, ".sgf")]', 'kifu_uri' => '@href';
-        process '//td[2]//a', 'white[]' => \%player;
-        process '//td[3]//a', 'black[]' => \%player;
+        process '//a[contains(@href, ".sgf")]', 'sgf_uri' => '@href';
+        process '//td[2]//a', 'white[]' => \%user;
+        process '//td[3]//a', 'black[]' => \%user;
         process '//td[3]', 'maybe_setup' => 'TEXT';
         process '//td[4]', 'setup' => 'TEXT';
         process '//td[5]', 'start_time' => 'TEXT';
@@ -34,12 +40,11 @@ sub _build_scraper {
         process 'td', 'year' => 'TEXT';
         process qq{//following-sibling::td[text()!="\x{a0}"]},
                 'month[]' => scraper {
-                    process '.', 'name' => 'TEXT';
+                    process '.', 'month' => [ 'TEXT', $month2num ];
                     process 'a', 'link' => '@href'; };
     };
 
     scraper {
-        process 'h2', 'summary' => 'TEXT';
         process '//table[tr/th/text()="Viewable?"]//following-sibling::tr',
                 'games[]' => $game;
         process '//a[contains(@href, ".zip")]', 'zip_uri' => '@href';
@@ -56,37 +61,55 @@ sub date_filter {
 }
 
 sub scrape {
-    my $self     = shift;
-    my $result   = $self->SUPER::scrape( @_ );
-    my $games    = $result->{games};
-    my $calendar = $result->{calendar};
+    my ( $self, @args ) = @_;
+    my $result = $self->SUPER::scrape( @args );
 
-    return $result unless $calendar;
+    for my $key (qw/calendar games zip_uri tgz_uri/) {
+        undef $result->{$key} unless exists $result->{$key};
+    }
+
+    return $result unless $result->{calendar};
 
     my @calendar;
-    for my $c ( @$calendar ) {
-        for my $month ( @{$c->{month}} ) {
-            $month->{year}  = $c->{year};
-            $month->{month} = delete $month->{name}; # rename
+    for my $calendar ( @{$result->{calendar}} ) {
+        for my $month ( @{$calendar->{month}} ) {
+            $month->{year} = $calendar->{year};
+            $month->{link} = undef unless exists $month->{link};
             push @calendar, $month;
         }
     }
 
     if ( @calendar == 1 and $calendar[0]{year} == 1970 ) { # KGS's bug
-        delete $result->{calendar};
+        undef $result->{calendar};
     }
     else {
-        $result->{calendar} = \@calendar;
+        @{$result->{calendar}} = @calendar;
     }
 
-    return $result unless $games;
+    return $result unless $result->{games};
 
-    for my $game ( @$games ) {
-        my $maybe_setup = delete $game->{maybe_setup};
+    my $date_filter = do {
+        my $orig = $self->date_filter;
+
+        sub {
+            my $date = shift;
+            my ( $mon, $mday, $yy, $hour, $min, $ampm )
+                = $date =~ m{^(\d\d?)/(\d\d?)/(\d\d) (\d\d?):(\d\d) (AM|PM)$};
+            $orig->(do {
+                sprintf '%04d-%02d-%02dT%02d:%02dZ',
+                        $yy+2000, $mon, $mday,
+                        $ampm eq 'PM' ? $hour+12 : $hour, $min;
+            });
+        };
+    };
+
+    for my $game ( @{$result->{games}} ) {
         next if exists $game->{black};
-        my $users = delete $game->{white}; # <td colspan="2">
+        my $users = $game->{white}; # <td colspan="2">
         if ( @$users == 1 ) { # Type: Demonstration
             $game->{owner} = $users->[0];
+            $game->{white} = undef;
+            $game->{black} = undef;
         }
         elsif ( @$users == 3 ) { # Type: Review
             $game->{owner} = $users->[0];
@@ -98,21 +121,25 @@ sub scrape {
             $game->{white} = [ @{$users}[1,2] ];
             $game->{black} = [ @{$users}[3,4] ];
         }
-        $game->{tag}        = delete $game->{result} if exists $game->{result};
-        $game->{result}     = delete $game->{type};
-        $game->{type}       = delete $game->{start_time};
-        $game->{start_time} = delete $game->{setup};
-        $game->{setup}      = $maybe_setup;
+        else {
+            die 'Oops! Something went wrong';
+        }
+        $game->{tag}        = $game->{result} if exists $game->{result};
+        $game->{result}     = $game->{type};
+        $game->{type}       = $game->{start_time};
+        $game->{start_time} = $game->{setup};
+        $game->{setup}      = $game->{maybe_setup};
     }
     continue {
-        $game->{setup} =~ /^(\d+)\x{d7}\d+ (?:H(\d+))?$/;
+        $game->{sgf_uri}    = undef unless exists $game->{sgf_uri};
+        $game->{owner}      = undef unless exists $game->{owner};
+        $game->{start_time} = $date_filter->( $game->{start_time} );
+        $game->{setup}      =~ /^(\d+)\x{d7}\d+ (?:H(\d+))?$/;
         $game->{board_size} = $1;
-        $game->{handicap} = $2;
-        $game->{start_time} = $self->date_filter->( $game->{start_time} );
+        $game->{handicap}   = $2;
         delete $game->{setup};
+        delete $game->{maybe_setup};
     }
-
-    @$games = reverse @$games; # sort by Start Time in descending order
 
     $result;
 }
@@ -177,14 +204,14 @@ shared by L<Web::Scraper> users (C<$Web::Scraper::UserAgent>).
 
 Can be used to get or set a date filter. Defaults to an anonymous subref
 which just returns the given argument (C<sub { $_[0] }>). The callback is
-called with a date string such as C<5/17/14 7:05 PM>.
+called with a date string such as C<2014-05-17T19:05Z>.
 The return value is used as the filtered value.
 
   use Time::Piece qw/gmtime/;
 
   $game_archives->date_filter(sub {
-      my $date = shift; # => "5/17/14 7:05 PM"
-      gmtime->strptime( $date, '%D %I:%M %p' );
+      my $date = shift; # => "2014-05-17T19:05Z"
+      gmtime->strptime( $date, '%Y-%m-%dT%H:%MZ' );
   });
 
 =back
@@ -199,10 +226,9 @@ Given key-value pairs of query parameters, returns a hash reference
 which represnets the result. The hashref is formatted as follows:
 
   {
-      summary => 'Games of KGS player foo, ...',
-      games => [ # sorted by "start_time" in descending order
+      games => [
           {
-              kifu_uri => 'http://.../games/2013/7/4/foo-bar.sgf',
+              sgf_uri => 'http://.../games/2013/7/4/foo-bar.sgf',
               white => [
                   {
                       name => 'foo',
@@ -219,7 +245,7 @@ which represnets the result. The hashref is formatted as follows:
               ],
               board_size => '19',
               handicap => '2',
-              start_time => '7/4/13 5:32 AM', # GMT
+              start_time => '2013-07-04T05:32Z',
               type => 'Ranked',
               result => 'W+Res.'
           },
@@ -230,7 +256,7 @@ which represnets the result. The hashref is formatted as follows:
       calendar => [
           {
               year  => '2011',
-              month => 'Jul',
+              month => '7',
               link  => 'http://...&year=2011&month=7...',
           },
           ...
@@ -291,6 +317,8 @@ L<WWW::KGS::GameArchives> was renamed to C<WWW::GoKGS::Scraper::GameArchives>
 (this module).
 The return value of the C<scrape> method (C<$result>) was modified as follows:
 
+  - Remove $result->{summary}
+  - Rename $game->{kifu_uri} to $game->{sgf_uri}
   - Rename $game->{editor} to $game->{owner}
   - Remove $game->{setup}
   - Add $game->{board_size}
@@ -298,8 +326,8 @@ The return value of the C<scrape> method (C<$result>) was modified as follows:
   - $user->{name} is not followed by a rank such as "[2k]"
   - Add $user->{rank}
 
-where C<$game> represents an element of C<< $result->{games} >>
-and  C<$user> represents C<< $game->{owner} >>, an element of
+where C<$game> denotes an element of C<< $result->{games} >>
+and  C<$user> denotes C<< $game->{owner} >>, an element of
 C<< $game->{white} >> or an element of C<< $game->{black} >> respectively.
 
 =head1 SEE ALSO
