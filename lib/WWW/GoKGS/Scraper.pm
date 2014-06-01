@@ -51,3 +51,79 @@ sub query {
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+WWW::GoKGS::Scraper - Abstract base class for scrapers
+
+=head1 SYNOPSIS
+
+  use parent 'WWW::GoKGS::Scraper';
+  use URI;
+  use Web::Scraper;
+
+  sub _build_base_uri {
+      URI->new('http://www.gokgs.com/...');
+  }
+
+  sub _build_scraper {
+      my $self = shift;
+
+      scraper {
+          ...
+      };
+  }
+
+=head1 DESCRIPTION
+
+This class is an abstract base class for KGS scrapers.
+KGS scrapers must inherit from this class, and also implement two methods;
+C<_build_base_uri> and C<_build_scraper>. C<_build_base_uri> must return
+a L<URI> object which represents a resource on KGS.
+C<_build_scraper> must return an L<Web::Scraper> object to parse
+the resource.
+
+=head2 ATTRIBUTES
+
+=over 4
+
+=item $scraper->base_uri
+
+Returns a L<URI> object which represents a resource on KGS.
+
+=item $scraper->user_agent
+
+Can be used to get or set an L<LWP::UserAgent> object to C<GET> the requested
+resource. Defaults to C<$Web::Scraper::UserAgent>.
+
+=back
+
+=head2 METHODS
+
+=over 4
+
+=item $scraper->scrape
+
+The given arguments are passed to L<Web::Scraper>'s C<scrape> method
+and then returns the return value simply.
+
+=item $scraper->query( $k1 => $v1, $k2 => $v2, ... )
+
+=back
+
+=head1 SEE ALSO
+
+L<WWW::GoKGS>
+
+=head1 AUTHOR
+
+Ryo Anazawa (anazawa@cpan.org)
+
+=head1 LICENSE
+
+This module is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself. See L<perlartistic>.
+
+=cut

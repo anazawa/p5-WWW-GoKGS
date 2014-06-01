@@ -122,13 +122,21 @@ __END__
 
 =head1 NAME
 
-WWW::GoKGS - KGS Go Server Scraper
+WWW::GoKGS - KGS Go Server (http://www.gokgs.com/) Scraper
 
 =head1 SYNOPSIS
 
   use WWW::GoKGS;
 
   my $gokgs = WWW::GoKGS->new;
+
+  # Game archives
+  my $gameArchives1 = $gokgs->scrape( '/gameArchives.jsp?user=foo' );
+  my $gameArchives2 = $gokgs->game_archives->query( user => 'foo' );
+
+  # Top 100 players
+  my $top100Players1 = $gokgs->scrape( '/top100.jsp' );
+  my $top100Players2 = $gokgs->top_100->query;
 
   # List of tournaments 
   my $tournList1 = $gokgs->scrape( '/tournList.jsp?year=2014' );
@@ -148,19 +156,44 @@ WWW::GoKGS - KGS Go Server Scraper
 
 =head1 DESCRIPTION
 
-=head2 ATTRIBUTES
+This module is a KGS Go Server (C<http://www.gokgs.com/>) scraper.
 
-All of the following attributes are read-only:
+This class maps a URI preceded by C<http://www.gokgs.com/>
+to a proper scraper.
+The supported resources on KGS are as follows:
+
+=over 4
+
+=item KGS Game Archives (http://www.gokgs.com/archives.jsp)
+
+Handled by L<WWW::GoKGS::Scraper::GameArchives>.
+
+=item Top 100 KGS Players (http://www.gokgs.com/top100.jsp)
+
+Handled by L<WWW::GoKGS::Scraper::Top100>.
+
+=item KGS Tournaments (http://www.gokgs.com/tournList.jsp)
+
+Handled by L<WWW::GoKGS::Scraper::TournList>,
+L<WWW::GoKGS::Scraper::TournInfo>,
+L<WWW::GoKGS::Scraper::TournEntrants> and
+L<WWW::GoKGS::Scraper::TournGames>.
+
+=back
+
+=head2 ATTRIBUTES
 
 =over 4
 
 =item $gokgs->user_agent
 
 Returns an L<LWP::UserAgent> object which is used to C<GET> the requested
-resource.
+resource. This attribute is read-only.
+
+  use LWP::UserAgent;
 
   my $user_agent = LWP::UserAgent->new(
-      agent => 'MyApp/1.00',
+      agent => 'MyAgent/1.00',
   );
 
   my $gokgs = WWW::GoKGS->new(
@@ -169,8 +202,10 @@ resource.
 
 =item $gokgs->html_filter
 
-Returns an HTML filter. Defaults to an anonymous subref which does nothing
-(C<sub {}>).
+Returns an HTML filter. Defaults to an anonymous subref which just returns
+the given argument (C<sub { $_[0] }>). The callback is called with
+an HTML string. The return value is used as the filtered value.
+This attribute is read-only.
 
   my $gokgs = WWW::GoKGS->new(
       html_filter => sub {
@@ -180,12 +215,12 @@ Returns an HTML filter. Defaults to an anonymous subref which does nothing
       },
   );
 
-See L<Web::Scraper::Filters> for details.
-
 =item $gokgs->date_filter
 
-Returns a date filter. Defaults to an anonymous subref which does nothing
-(C<sub {}>).
+Returns a date filter. Defaults to an anonymous subref which just returns
+the given argument (C<sub { $_[0] }>). The callback is called with
+a date string such as C<5/17/14 7:05 PM>. The return value is used as
+the filtered value. This attribute is read-only.
 
   use Time::Piece qw/gmtime/;
 
@@ -196,23 +231,35 @@ Returns a date filter. Defaults to an anonymous subref which does nothing
       },
   );
 
-See L<Web::Scraper::Filters> for details.
+=item $gokgs->game_archives
+
+Returns a L<WWW::GoKGS::Scraper::GameArchives> object.
+This attribute is read-only.
+
+=item $gokgs->top_100
+
+Returns a L<WWW::GoKGS::Scraper::Top100> object.
+This attribute is read-only.
 
 =item $gokgs->tourn_list
 
 Returns a L<WWW::GoKGS::Scraper::TournList> object.
+This attribute is read-only.
 
 =item $gokgs->tourn_info
 
 Returns a L<WWW::GoKGS::Scraper::TournInfo> object.
+This attribute is read-only.
 
 =item $gokgs->tourn_entrants
 
 Returns a L<WWW::GoKGS::Scraper::TournEntrants> object.
+This attribute is read-only.
 
 =item $gokgs->tourn_games
 
 Returns a L<WWW::GoKGS::Scraper::TournGames> object.
+This attribute is read-only.
 
 =back
 
@@ -220,41 +267,71 @@ Returns a L<WWW::GoKGS::Scraper::TournGames> object.
 
 =over 4
 
-=item $tournList = $gokgs->scrape( '/tournList.jsp?year=2014' )
+=item $gokgs->scrape( '/gameArchives.jsp?user=foo' )
 
-=item $tournList = $gokgs->scrape( 'http://www.gokgs.com/tournList.jsp?year=2014' )
+=item $gokgs->scrape( 'http://www.gokgs.com/gameArchives.jsp?user=foo' )
+
+A shortcut for:
+
+  my $uri = URI->new( 'http://www.gokgs.com/gameArchives.jsp?user=foo' );
+  my $gameArchives = $gokgs->game_archives->scrape( $uri );
+
+See L<WWW::GoKGS::Scraper::GameArchives> for details.
+
+=item $gokgs->scrape( '/top100.jsp' )
+
+=item $gokgs->scrape( 'http://www.gokgs.com/top100.jsp' )
+
+A shortcut for:
+
+  my $uri = URI->new( 'http://www.gokgs.com/top100.jsp' );
+  my $top100 = $gokgs->top_100->scrape( $uri );
+
+See L<WWW::GoKGS::Scraper::Top100> for details.
+
+=item $gokgs->scrape( '/tournList.jsp?year=2014' )
+
+=item $gokgs->scrape( 'http://www.gokgs.com/tournList.jsp?year=2014' )
 
 A shortcut for:
 
   my $uri = URI->new( 'http://www.gokgs.com/tournList.jsp?year=2014' );
   my $tournList = $gokgs->tourn_list->scrape( $uri );
 
-=item $tournInfo = $gokgs->scrape( '/tournInfo.jsp?id=123' )
+See L<WWW::GoKGS::Scraper::TournList> for details.
 
-=item $tournInfo = $gokgs->scrape( 'http://www.gokgs.com/tournInfo.jsp?id=123' )
+=item $gokgs->scrape( '/tournInfo.jsp?id=123' )
+
+=item $gokgs->scrape( 'http://www.gokgs.com/tournInfo.jsp?id=123' )
 
 A shortcut for:
 
   my $uri = URI->new( 'http://www.gokgs.com/tournInfo.jsp?id=123' );
   my $tournInfo = $gokgs->tourn_info->scrape( $uri );
 
-=item $tournEntrants = $gokgs->scrape( '/tournEntrants.jsp?id=123&s=n' )
+See L<WWW::GoKGS::Scraper::TournInfo> for details.
 
-=item $tournEntrants = $gokgs->scrape( 'http://www.gokgs.com/tournEntrants.jsp?id=123&s=n' )
+=item $gokgs->scrape( '/tournEntrants.jsp?id=123&s=n' )
+
+=item $gokgs->scrape( 'http://www.gokgs.com/tournEntrants.jsp?id=123&s=n' )
 
 A shortcut for:
 
   my $uri = URI->new( 'http://www.gokgs.com/tournEntrants.jsp?id=123&s=n' );
   my $tournEntrants = $gokgs->tourn_entrants->scrape( $uri );
 
-=item $tournGames = $gokgs->scrape( '/tournGames.jsp?id=123&round=1' )
+See L<WWW::GoKGS::Scraper::TournEntrants> for details.
 
-=item $tournGames = $gokgs->scrape( 'http://www.gokgs.com/tournGames.jsp?id=123&round=1' )
+=item $gokgs->scrape( '/tournGames.jsp?id=123&round=1' )
+
+=item $gokgs->scrape( 'http://www.gokgs.com/tournGames.jsp?id=123&round=1' )
 
 A shortcut for:
 
   my $uri = URI->new( 'http://www.gokgs.com/tournGames.jsp?id=123&round=1' );
   my $tournGames = $gokgs->tourn_games->scrape( $uri );
+
+See L<WWW::GoKGS::Scraper::TournGames> for details.
 
 =back
 
