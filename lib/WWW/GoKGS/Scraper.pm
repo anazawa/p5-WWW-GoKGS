@@ -89,12 +89,12 @@ the resource.
 
 =over 4
 
-=item $scraper->base_uri
+=item $URI = $scraper->base_uri
 
 Returns a L<URI> object which represents a resource on KGS.
 This attribute is read-only.
 
-=item $scraper->user_agent
+=item $UserAgent = $scraper->user_agent
 
 Can be used to get or set an L<LWP::UserAgent> object which is used to
 C<GET> the requested resource. Defaults to the C<LWP::UserAgent> object

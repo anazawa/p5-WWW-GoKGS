@@ -21,7 +21,7 @@ sub _build_scraper {
     my %user = (
         name => [ 'TEXT', sub { s/ \[[^\]]+\]$// } ],
         rank => [ 'TEXT', sub { m/ \[([^\]]+)\]$/ ? $1 : undef } ],
-        link => '@href',
+        uri  => '@href',
     );
 
     my $game = scraper {
@@ -41,7 +41,7 @@ sub _build_scraper {
         process qq{//following-sibling::td[text()!="\x{a0}"]},
                 'month[]' => scraper {
                     process '.', 'month' => [ 'TEXT', $month2num ];
-                    process 'a', 'link' => '@href'; };
+                    process 'a', 'uri'   => '@href'; };
     };
 
     scraper {
@@ -74,7 +74,7 @@ sub scrape {
     for my $calendar ( @{$result->{calendar}} ) {
         for my $month ( @{$calendar->{month}} ) {
             $month->{year} = $calendar->{year};
-            $month->{link} = undef unless exists $month->{link};
+            $month->{uri}  = undef unless exists $month->{uri};
             push @calendar, $month;
         }
     }
@@ -97,8 +97,8 @@ sub scrape {
                 = $date =~ m{^(\d\d?)/(\d\d?)/(\d\d) (\d\d?):(\d\d) (AM|PM)$};
             $orig->(do {
                 sprintf '%04d-%02d-%02dT%02d:%02dZ',
-                        $yy+2000, $mon, $mday,
-                        $ampm eq 'PM' ? $hour+12 : $hour, $min;
+                        $yy + 2000, $mon, $mday,
+                        $ampm eq 'PM' ? $hour + 12 : $hour, $min;
             });
         };
     };
@@ -167,6 +167,8 @@ in the HTML forms. The search result is provided as an HTML document naturally.
 This module provides yet another interface to send a query to the archives,
 and also parses the result into a neatly arranged Perl data structure.
 
+This class inherits from L<WWW::GoKGS::Scraper>.
+
 =head2 DISCLAIMER
 
 According to KGS's C<robots.txt>, bots are not allowed to crawl 
@@ -190,7 +192,7 @@ The value is used to create a request URI by C<query> method.
 The request URI is passed to C<scrape> method.
 This attribute is read-only.
 
-=item $LWP_UserAgent = $game_archives->user_agent
+=item $UserAgent = $game_archives->user_agent
 
 =item $game_archives->user_agent( LWP::UserAgent->new(...) )
 
@@ -220,7 +222,7 @@ The return value is used as the filtered value.
 
 =over 4
 
-=item $result = $game_archives->query( user => 'YourAccount', ... )
+=item $HashRef = $game_archives->query( user => 'YourAccount', ... )
 
 Given key-value pairs of query parameters, returns a hash reference
 which represnets the result. The hashref is formatted as follows:
@@ -233,14 +235,14 @@ which represnets the result. The hashref is formatted as follows:
                   {
                       name => 'foo',
                       rank => '4k',
-                      link => 'http://...&user=foo...'
+                      uri  => 'http://...&user=foo...'
                   }
               ],
               black => [
                   {
                       name => 'bar',
                       rank => '6k',
-                      link => 'http://...&user=bar...'
+                      uri  => 'http://...&user=bar...'
                   }
               ],
               board_size => '19',
@@ -257,7 +259,7 @@ which represnets the result. The hashref is formatted as follows:
           {
               year  => '2011',
               month => '7',
-              link  => 'http://...&year=2011&month=7...',
+              uri   => 'http://...&year=2011&month=7...',
           },
           ...
       ]
@@ -303,7 +305,7 @@ Can be used to search games tagged by the specified C<user>.
 
 =back
 
-=item $result = $game_archives->scrape( $stuff )
+=item $HashRef = $game_archives->scrape( $stuff )
 
 The given arguments are passed to L<Web::Scraper>'s C<scrape> method.
 C<query> method is just a wrapper of this method. For example,
@@ -323,8 +325,9 @@ The return value of the C<scrape> method (C<$result>) was modified as follows:
   - Remove $game->{setup}
   - Add $game->{board_size}
   - Add $game->{handicap}
-  - $user->{name} is not followed by a rank such as "[2k]"
+  - $user->{name} does not end with a rank string such as "[2k]"
   - Add $user->{rank}
+  - Rename $user->{link} to $user->{uri}
 
 where C<$game> denotes an element of C<< $result->{games} >>
 and  C<$user> denotes C<< $game->{owner} >>, an element of

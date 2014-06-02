@@ -12,15 +12,21 @@ sub _build_base_uri {
 sub _build_scraper {
     my $self = shift;
 
+    my %tournament = (
+        name => 'TEXT',
+        uri  => '@href',
+    );
+
+    my %year_index = (
+        year => 'TEXT',
+        uri  => '@href',
+    );
+
     scraper {
-        process '//p[starts-with(a/@href, "tournInfo.jsp")]',
-                'tournaments[]' => scraper {
-                    process '.', name => [ 'TEXT', \&_name ];
-                    process '.', winners => [ 'TEXT', \&_winners ];
-                    process '.', state => [ 'TEXT', \&_state ];
-                    process 'a', link => '@href'; };
+        process '//a[starts-with(@href, "tournInfo.jsp")]',
+                'tournaments[]' => \%tournament;
         process '//a[starts-with(@href, "tournList.jsp")]',
-                'year_index[]' => { year => 'TEXT', link => '@href' };
+                'year_index[]' => \%year_index;
         process '//p[preceding-sibling::h2/text()="Year Index"]',
                 '_years' => 'TEXT';
     };
@@ -39,23 +45,11 @@ sub scrape {
 
     for my $i ( 0 .. @years-1 ) {
         next if $year_index->[$i] and $year_index->[$i]->{year} eq $years[$i];
-        splice @$year_index, $i, 0, { year => $years[$i] };
+        splice @$year_index, $i, 0, { year => $years[$i], uri => undef };
         last;
     }
 
     $result;
-}
-
-sub _name {
-    s/ \([^)]+\)$//;
-}
-
-sub _winners {
-    m/ \((?:Winner|Tie; winners): ([^)]+)\)$/ ? [ split /, /, $1 ] : undef;
-}
-
-sub _state {
-    m/ \((Not started yet|Aborted)\)$/ ? $1 : undef;
 }
 
 1;
@@ -64,49 +58,54 @@ __END__
 
 =head1 NAME
 
-WWW::KGS::Tournaments::List - List of tournaments
+WWW::GoKGS::Scraper::TournList - List of KGS tournaments
 
 =head1 SYNOPSIS
 
-  use WWW::KGS::Tournaments::List;
+  use WWW::GoKGS::Scraper::TournList;
 
-  my $list = WWW::KGS::Tournaments::List->new;
+  my $tourn_list = WWW::GoKGS::Scraper::TournList->new;
 
-  my $result = $list->query(
+  my $result = $tourn_list->query(
       year => 2012,
   );
   # => {
   #     tournaments => [
-  #         ...
   #         {
   #             name => 'KGS Meijin Qualifier October 2012',
-  #             link => 'tournInfo.jsp?id=762',
-  #             ...
+  #             uri  => 'http://www.gokgs.com/tournInfo.jsp?id=762',
   #         },
   #         ...
   #     ],
   #     year_index => [
   #         {
-  #             year => 2001,
-  #             link => 'tournList.jsp?year=2001',
+  #             year => '2001',
+  #             uri  => 'http://www.gokgs.com/tournList.jsp?year=2001',
   #         },
   #         ...
-  #     ],
+  #     ]
   # }
 
 =head1 DESCRIPTION
 
-This class inherits from L<WWW::KGS::Tournaments>.
+This class inherits from L<WWW::GoKGS::Scraper>.
 
 =head2 ATTRIBUTES
 
 =over 4
 
-=item base_uri
+=item $URI = $tourn_list->base_uri
 
 Defaults to C<http://www.gokgs.com/tournList.jsp>.
+This attribute is read-only.
 
-=item user_agent
+=item $UserAgent = $tourn_list->user_agent
+
+=item $tourn_list->user_agent( LWP::UserAgent->new(...) )
+
+Can be used to get or set an L<LWP::UserAgent> object which is used to
+C<GET> the requested resource. Defaults to the C<LWP::UserAgent> object
+shared by L<Web::Scraper> users (C<$Web::Scraper::UserAgent>).
 
 =back
 
@@ -114,11 +113,15 @@ Defaults to C<http://www.gokgs.com/tournList.jsp>.
 
 =over 4
 
-=item scrape
+=item $tourn_list->scrape
 
-=item query
+=item $tourn_list->query
 
 =back
+
+=head1 SEE ALSO
+
+L<WWW::GoKGS>
 
 =head1 AUTHOR
 

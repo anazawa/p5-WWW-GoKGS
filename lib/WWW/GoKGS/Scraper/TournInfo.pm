@@ -12,19 +12,9 @@ sub _build_base_uri {
 
 sub _build_scraper {
     my $self = shift;
-    my $name = sub { s/ \([^)]+\)$// };
-    my $state = sub { m/ \((Not started yet|Aborted)\)$/ ? $1 : q{} };
-
-    my $winners = sub {
-        m/ \((?:Winner|Tie; winners): ([^)]+)\)$/
-            ? [ split /, /, $1 ]
-            : undef;
-    };
 
     scraper {
-        process '//h1', 'name' => [ 'TEXT', $name ];
-        process '//h1', 'winners' => [ 'TEXT', $winners ];
-        process '//h1', 'state' => [ 'TEXT', $state ];
+        process '//h1', 'name' => [ 'TEXT', sub { s/ \([^)]+\)$// } ];
         process '//node()[preceding-sibling::h1 and following-sibling::div]',
                 'description[]' => sub { $_[0]->as_XML };
         process_links date_filter => $self->date_filter;
@@ -47,8 +37,14 @@ sub scrape {
     my ( $self, @args ) = @_;
     my $result = $self->SUPER::scrape( @args );
 
+    for my $key (qw/name description links/) {
+        undef $result->{$key} unless exists $result->{$key};
+    }
+
+    return $result unless $result->{description};
+
     $result->{description} = $self->html_filter->(do {
-        join q{}, @{ $result->{description} || [] };
+        join q{}, @{$result->{description}};
     });
 
     $result;
@@ -60,54 +56,92 @@ __END__
 
 =head1 NAME
 
-WWW::KGS::Tournaments::Info - Information for the tournament
+WWW::GoKGS::Scraper::TournInfo - Information for the KGS tournament
 
 =head1 SYNOPSIS
 
-  use WWW::KGS::Tournaments::Info;
+  use WWW::GoKGS::Scraper::TournInfo;
 
-  my $info = WWW::KGS::Tournaments::Info->new;
+  my $tourn_info = WWW::GoKGS::Scraper::TournInfo->new;
 
-  my $result = $info->query(
+  my $result = $tourn_info->query(
       id => 762,
   );
   # => {
   #     name => 'KGS Meijin Qualifier October 2012',
   #     description => 'Welcome to the KGS Meijin October Qualifier! ...',
   #     links => {
-  #         time_zone => 'GMT',
   #         entrants => [
   #             {
   #                 sort_by => 'name',
-  #                 link => 'tournEntrants.jsp?id=762&sort=n',
+  #                 uri => 'http://www.gokgs.com/tournEntrants.jsp?id=762&sort=n',
   #             },
   #             ...
   #         ],
   #         rounds => [
   #             {
-  #                 round => 1,
-  #                 start_time => '10/27/12 4:05 PM',
-  #                 end_time => '10/27/12 6:35 PM',
-  #                 link => 'tournGames.jsp?id=762&round=1',
+  #                 round => '1',
+  #                 start_time => '2012-10-27T16:05Z',
+  #                 end_time => '2012-10-27T18:35Z',
+  #                 uri => 'http://www.gokgs.com/tournGames.jsp?id=762&round=1',
   #             },
   #             ...
-  #         ],
-  #     },
+  #         ]
+  #     }
   # }
 
 =head1 DESCRIPTION
 
-This class inherits from L<WWW::KGS::Tournaments>.
+This class inherits from L<WWW::GoKGS::Scraper>.
 
 =head2 ATTRIBUTES
 
 =over 4
 
-=item base_uri
+=item $URI = $tourn_info->base_uri
 
 Defaults to C<http://www.gokgs.com/tournInfo.jsp>.
+This attribute is read-only.
 
-=item user_agent
+=item $UserAgent = $tourn_info->user_agent
+
+=item $tourn_info->user_agent( LWP::UserAgent->new(...) )
+
+Can be used to get or set an L<LWP::UserAgent> object which is used to
+C<GET> the requested resource. Defaults to the C<LWP::UserAgent> object
+shared by L<Web::Scraper> users (C<$Web::Scraper::UserAgent>).
+
+=item $CodeRef = $tourn_info->html_filter
+
+=item $tourn_info->html_filter( sub { my $html = shift; ... } )
+
+Can be used to get or set an HTML filter.
+Defaults to an anonymous subref which just returns
+the given argument (C<sub { $_[0] }>). The callback is called with
+an HTML string. The return value is used as the filtered value.
+
+  $tourn_info->html_filter(sub { 
+      my $html = shift;
+      $html =~ s/<.*?>//g; # strip HTML tags
+      $html;
+  });
+
+=item $CodeRef = $tourn_info->date_filter
+
+=item $tourn_info->date_filter( sub { my $date = shift; ... } )
+
+Can be used to get or set a date filter.
+Defaults to an anonymous subref which just returns
+the given argument (C<sub { $_[0] }>). The callback is called with
+a date string such as C<2014-05-17T19:05Z>. The return value is used as
+the filtered value.
+
+  use Time::Piece qw/gmtime/;
+
+  $tourn_info->date_filter(sub {
+      my $date = shift; # => "2014-05-17T19:05Z"
+      gmtime->strptime( $date, '%Y-%m-%dT%H:%MZ' );
+  });
 
 =back
 
@@ -115,11 +149,15 @@ Defaults to C<http://www.gokgs.com/tournInfo.jsp>.
 
 =over 4
 
-=item scrape
+=item $tourn_info->scrape
 
-=item query
+=item $tourn_info->query
 
 =back
+
+=head1 SEE ALSO
+
+L<WWW::GoKGS>
 
 =head1 AUTHOR
 
