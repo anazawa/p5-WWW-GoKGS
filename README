@@ -48,21 +48,19 @@ DESCRIPTION
         and WWW::GoKGS::Scraper::TournGames.
 
   ATTRIBUTES
-    $gokgs->user_agent
+    $UserAgent = $gokgs->user_agent
         Returns an LWP::UserAgent object which is used to "GET" the
         requested resource. This attribute is read-only.
 
           use LWP::UserAgent;
 
-          my $user_agent = LWP::UserAgent->new(
-              agent => 'MyAgent/1.00',
-          );
-
           my $gokgs = WWW::GoKGS->new(
-              user_agent => $user_agent,
+              user_agent => LWP::UserAgent->new(
+                  agent => 'MyAgent/1.00',
+              ),
           );
 
-    $gokgs->html_filter
+    $CodeRef = $gokgs->html_filter
         Returns an HTML filter. Defaults to an anonymous subref which just
         returns the given argument ("sub { $_[0] }"). The callback is called
         with an HTML string. The return value is used as the filtered value.
@@ -76,48 +74,49 @@ DESCRIPTION
               },
           );
 
-    $gokgs->date_filter
+    $CodeRef = $gokgs->date_filter
         Returns a date filter. Defaults to an anonymous subref which just
         returns the given argument ("sub { $_[0] }"). The callback is called
-        with a date string such as "5/17/14 7:05 PM". The return value is
+        with a date string such as "2014-05-17T19:05Z". The return value is
         used as the filtered value. This attribute is read-only.
 
           use Time::Piece qw/gmtime/;
 
           my $gokgs = WWW::GoKGS->new(
               date_filter => sub {
-                  my $date = shift; # => "5/17/14 7:05 PM"
-                  gmtime->strptime( $date, '%D %I:%M %p' );
+                  my $date = shift; # => "2014-05-17T19:05Z"
+                  gmtime->strptime( $date, '%Y-%m-%dT%H:%MZ' );
               },
           );
 
-    $gokgs->game_archives
+    $GameArchive = $gokgs->game_archives
         Returns a WWW::GoKGS::Scraper::GameArchives object. This attribute
         is read-only.
 
-    $gokgs->top_100
+    $Top100 = $gokgs->top_100
         Returns a WWW::GoKGS::Scraper::Top100 object. This attribute is
         read-only.
 
-    $gokgs->tourn_list
+    $TournList = $gokgs->tourn_list
         Returns a WWW::GoKGS::Scraper::TournList object. This attribute is
         read-only.
 
-    $gokgs->tourn_info
+    $TournInfo = $gokgs->tourn_info
         Returns a WWW::GoKGS::Scraper::TournInfo object. This attribute is
         read-only.
 
-    $gokgs->tourn_entrants
+    $TournEntrants = $gokgs->tourn_entrants
         Returns a WWW::GoKGS::Scraper::TournEntrants object. This attribute
         is read-only.
 
-    $gokgs->tourn_games
+    $TournGames = $gokgs->tourn_games
         Returns a WWW::GoKGS::Scraper::TournGames object. This attribute is
         read-only.
 
   METHODS
-    $gokgs->scrape( '/gameArchives.jsp?user=foo' )
-    $gokgs->scrape( 'http://www.gokgs.com/gameArchives.jsp?user=foo' )
+    $HashRef = $gokgs->scrape( '/gameArchives.jsp?user=foo' )
+    $HashRef = $gokgs->scrape(
+    'http://www.gokgs.com/gameArchives.jsp?user=foo' )
         A shortcut for:
 
           my $uri = URI->new( 'http://www.gokgs.com/gameArchives.jsp?user=foo' );
@@ -125,8 +124,8 @@ DESCRIPTION
 
         See WWW::GoKGS::Scraper::GameArchives for details.
 
-    $gokgs->scrape( '/top100.jsp' )
-    $gokgs->scrape( 'http://www.gokgs.com/top100.jsp' )
+    $HashRef = $gokgs->scrape( '/top100.jsp' )
+    $HashRef = $gokgs->scrape( 'http://www.gokgs.com/top100.jsp' )
         A shortcut for:
 
           my $uri = URI->new( 'http://www.gokgs.com/top100.jsp' );
@@ -134,8 +133,9 @@ DESCRIPTION
 
         See WWW::GoKGS::Scraper::Top100 for details.
 
-    $gokgs->scrape( '/tournList.jsp?year=2014' )
-    $gokgs->scrape( 'http://www.gokgs.com/tournList.jsp?year=2014' )
+    $HashRef = $gokgs->scrape( '/tournList.jsp?year=2014' )
+    $HashRef = $gokgs->scrape(
+    'http://www.gokgs.com/tournList.jsp?year=2014' )
         A shortcut for:
 
           my $uri = URI->new( 'http://www.gokgs.com/tournList.jsp?year=2014' );
@@ -143,8 +143,8 @@ DESCRIPTION
 
         See WWW::GoKGS::Scraper::TournList for details.
 
-    $gokgs->scrape( '/tournInfo.jsp?id=123' )
-    $gokgs->scrape( 'http://www.gokgs.com/tournInfo.jsp?id=123' )
+    $HashRef = $gokgs->scrape( '/tournInfo.jsp?id=123' )
+    $HashRef = $gokgs->scrape( 'http://www.gokgs.com/tournInfo.jsp?id=123' )
         A shortcut for:
 
           my $uri = URI->new( 'http://www.gokgs.com/tournInfo.jsp?id=123' );
@@ -152,8 +152,9 @@ DESCRIPTION
 
         See WWW::GoKGS::Scraper::TournInfo for details.
 
-    $gokgs->scrape( '/tournEntrants.jsp?id=123&s=n' )
-    $gokgs->scrape( 'http://www.gokgs.com/tournEntrants.jsp?id=123&s=n' )
+    $HashRef = $gokgs->scrape( '/tournEntrants.jsp?id=123&s=n' )
+    $HashRef = $gokgs->scrape(
+    'http://www.gokgs.com/tournEntrants.jsp?id=123&s=n' )
         A shortcut for:
 
           my $uri = URI->new( 'http://www.gokgs.com/tournEntrants.jsp?id=123&s=n' );
@@ -161,8 +162,9 @@ DESCRIPTION
 
         See WWW::GoKGS::Scraper::TournEntrants for details.
 
-    $gokgs->scrape( '/tournGames.jsp?id=123&round=1' )
-    $gokgs->scrape( 'http://www.gokgs.com/tournGames.jsp?id=123&round=1' )
+    $HashRef = $gokgs->scrape( '/tournGames.jsp?id=123&round=1' )
+    $HashRef = $gokgs->scrape(
+    'http://www.gokgs.com/tournGames.jsp?id=123&round=1' )
         A shortcut for:
 
           my $uri = URI->new( 'http://www.gokgs.com/tournGames.jsp?id=123&round=1' );
