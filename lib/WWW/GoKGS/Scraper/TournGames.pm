@@ -12,35 +12,44 @@ sub _build_base_uri {
 
 sub _build_scraper {
     my $self = shift;
+    my $name = sub { s/ Round \d+ Games$// };
     my $round = sub { m/ Round (\d+) Games$/ ? $1 : undef };
     my $handicap = sub { m/ H(\d+)$/ ? $1 : undef };
     my $board_size = sub { m/^(\d+)\x{d7}\d+ / ? $1 : undef };
-    my $tournament_name = sub { s/ Round \d+ Games$// };
 
-    my $players = sub {
+    my $player = sub {
         m/^([a-zA-Z0-9]+)(?: \[([^\]]+)\])?$/ 
-            ? [{ name => $1, rank => $2 || q{} }]
-            : q{};
+            ? { name => $1, rank => $2 || undef }
+            : {};
+    };
+
+    my $start_time = sub {
+        my $date = shift;
+        my ( $mon, $mday, $yy, $hour, $min, $ampm )
+            = $date =~ m{^(\d\d?)/(\d\d?)/(\d\d) (\d\d?):(\d\d) (AM|PM)$};
+        sprintf '%04d-%02d-%02dT%02d:%02dZ',
+                $yy + 2000, $mon, $mday,
+                $ampm eq 'PM' ? $hour + 12 : $hour, $min;
     };
 
     my $game = scraper {
-        process '//td[1]/a', 'kifu_uri' => '@href';
-        process '//td[2]', 'white' => [ 'TEXT', $players ];
-        process '//td[3]', 'black' => [ 'TEXT', $players ];
-        process '//td[3]', 'maybe_result' => 'TEXT';
+        process '//td[1]/a', 'sgf_uri' => '@href';
+        process '//td[2]', 'white' => [ 'TEXT', $player ];
+        process '//td[3]', 'black' => [ 'TEXT', $player ];
+        process '//td[3]', 'maybe_bye' => 'TEXT';
         process '//td[4]', 'board_size' => [ 'TEXT', $board_size ];
         process '//td[4]', 'handicap' => [ 'TEXT', $handicap ];
-        process '//td[5]', 'start_time' => [ 'TEXT', $self->date_filter ];
+        process '//td[5]', 'start_time' => [ 'TEXT', $start_time, $self->date_filter ];
         process '//td[6]', 'result' => 'TEXT';
     };
 
     scraper {
-        process '//h1', 'name' => [ 'TEXT', $tournament_name ];
+        process '//h1', 'name' => [ 'TEXT', $name ];
         process '//h1', 'round' => [ 'TEXT', $round ];
         process '//table[@class="grid"]//following-sibling::tr',
                 'games[]' => $game;
-        process '//a[text()="Previous round"]', 'previous_round' => '@href';
-        process '//a[text()="Next round"]', 'next_round' => '@href';
+        process '//a[text()="Previous round"]', 'previous_round_uri' => '@href';
+        process '//a[text()="Next round"]', 'next_round_uri' => '@href';
         process_links date_filter => $self->date_filter;
     };
 }
@@ -54,21 +63,36 @@ sub date_filter {
 sub scrape {
     my ( $self, @args ) = @_;
     my $result = $self->SUPER::scrape( @args );
-    my $games = $result->{games};
 
-    return $result unless $games;
+    %$result = (
+        name               => undef,
+        round              => undef,
+        games              => [],
+        byes               => [],
+        previous_round_uri => undef,
+        next_round_uri     => undef,
+        links              => {},
+        %$result,
+    );
 
-    for my $game ( @$games ) {
-        my $maybe_result = delete $game->{maybe_result};
-        next if exists $game->{start_time};
-        next unless $maybe_result =~ /^Bye(?: \((?:No show|Requested)\))?$/;
-        $game->{result} = $maybe_result;
-        $game->{black} = [];
-        $game->{board_size} = undef;
-        $game->{handicap} = undef;
-        $game->{kifu_uri} = undef;
-        $game->{start_time} = undef;
+    return $result unless @{$result->{games}};
+
+    my ( @games, @byes );
+    for my $game ( @{$result->{games}} ) {
+        my $maybe_bye = delete $game->{maybe_bye};
+        if ( $maybe_bye =~ /^Bye(?: \([^)]+\))?$/ ) {
+            push @byes, {
+                type => $1 || 'System',
+                %{$game->{white}},
+            };
+        }
+        else {
+            push @games, $game;
+        }
     }
+
+    $result->{games} = \@games;
+    $result->{byes}  = \@byes;
 
     $result;
 }
@@ -79,51 +103,49 @@ __END__
 
 =head1 NAME
 
-WWW::KGS::Tournaments::Games - Games of the tournament
+WWW::GoKGS::Scraper::TournGames - Games of the KGS tournament
 
 =head1 SYNOPSIS
 
-  use WWW::KGS::Tournaments::Games;
+  use WWW::GoKGS::Scraper::TournGames;
 
-  my $games = WWW::KGS::Tournaments::Games->new;
+  my $tourn_games = WWW::GoKGS::Scraper::TournGames->new;
 
-  my $result = $games->query(
+  my $result = $tourn_games->query(
       id    => 762,
       round => 1,
   );
   # => {
   #     name => 'KGS Meijin Qualifier October 2012',
-  #     round => 1,
-  #     time_zone => 'GMT',
+  #     round => '1',
   #     games => [
   #         {
-  #             kifu_uri => 'http://files.gokgs.com/.../foo-bar.sgf',
+  #             sgf_uri => 'http://files.gokgs.com/.../foo-bar.sgf',
   #             board_size => 19,
-  #             white => [{
+  #             white => {
   #                 name => 'foo',
   #                 rank => '2k',
-  #             }],
-  #             black => [{
+  #             ],
+  #             black => {
   #                 name => 'bar',
   #                 rank => '2k',
-  #             }],
+  #             },
   #         },
   #     ],
   #     links => {
-  #         time_zone => 'GMT',
   #         entrants => [
   #             {
   #                 sort_by => 'name',
-  #                 link => 'tournEntrants.jsp?id=762&sort=n',
+  #                 uri     => 'http://www.gokgs.com/tournEntrants.jsp?id=762&sort=n',
   #             },
   #             ...
   #         ],
   #         rounds => [
   #             {
-  #                 round => 1,
+  #                 round      => 1,
   #                 start_time => '10/27/12 4:05 PM',
-  #                 end_time => '10/27/12 6:35 PM',
-  #                 link => 'tournGames.jsp?id=762&round=1',
+  #                 end_time   => '10/27/12 6:35 PM',
+  #                 uri        => 'http://www.gokgs.com/tournGames.jsp?id=762&round=1',
   #             },
   #             ...
   #         ],
@@ -132,17 +154,24 @@ WWW::KGS::Tournaments::Games - Games of the tournament
 
 =head1 DESCRIPTION
 
-This class inherits from L<WWW::KGS::Tournaments>.
+This class inherits from L<WWW::GoKGS::Scraper>.
 
 =head2 ATTRIBUTES
 
 =over 4
 
-=item base_uri
+=item $URI = $tuorn_games->base_uri
 
 Defaults to C<http://www.gokgs.com/tournGames.jsp>.
+This attribute is read-only.
 
-=item user_agent
+=item $UserAgent = $tourn_games->user_agent
+
+=item $tourn_games->user_agent( LWP::UserAgent->new(...) )
+
+Can be used to get or set an L<LWP::UserAgent> object which is used to
+C<GET> the requested resource. Defaults to the C<LWP::UserAgent> object
+shared by L<Web::Scraper> users (C<$Web::Scraper::UserAgent>).
 
 =back
 
@@ -150,11 +179,15 @@ Defaults to C<http://www.gokgs.com/tournGames.jsp>.
 
 =over 4
 
-=item scrape
+=item $tourn_games->scrape
 
-=item query
+=item $tourn_games->query
 
 =back
+
+=head1 SEE ALSO
+
+L<WWW::GoKGS>
 
 =head1 AUTHOR
 
