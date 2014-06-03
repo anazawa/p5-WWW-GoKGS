@@ -49,11 +49,15 @@ sub scrape {
     my ( $self, @args ) = @_;
     my $result = $self->SUPER::scrape( @args );
 
-    for my $key (qw/name entrants results links/) {
-        undef $result->{$key} unless exists $result->{$key};
-    }
+    %$result = (
+        name     => undef,
+        entrants => [],
+        results  => {},
+        links    => {},
+        %$result,
+    );
 
-    return $result unless $result->{entrants};
+    return $result unless @{$result->{entrants}};
 
     if ( !$result->{entrants}->[0] ) { # Round Robin
         shift @{$result->{entrants}};
@@ -117,9 +121,17 @@ sub scrape {
     }
 
     for my $entrant ( @{$result->{entrants}} ) {
-        for my $key (qw/name rank position standing notes score sos sodos/) {
-            undef $entrant->{$key} unless exists $entrant->{$key};
-        }
+        %$entrant = (
+            name     => undef,
+            rank     => undef,
+            position => undef,
+            standing => undef,
+            notes    => undef,
+            score    => undef,
+            sos      => undef,
+            sodos    => undef,
+            %$entrant,
+        );
     }
 
     $result;

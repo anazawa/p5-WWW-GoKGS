@@ -35,14 +35,22 @@ sub _build_scraper {
 sub scrape {
     my ( $self, @args ) = @_;
     my $result = $self->SUPER::scrape( @args );
-    my $year_index = $result->{year_index};
+
+    %$result = (
+        year_index  => [],
+        tournaments => [],
+        %$result,
+    );
 
     my @years = do {
-       my $_years = delete $result->{_years};
+       my $_years = delete $result->{_years} || q{};
        $_years =~ s/ $//;
        split / /, $_years;
     };
 
+    return $result unless @years;
+
+    my $year_index = $result->{year_index};
     for my $i ( 0 .. @years-1 ) {
         next if $year_index->[$i] and $year_index->[$i]->{year} eq $years[$i];
         splice @$year_index, $i, 0, { year => $years[$i], uri => undef };

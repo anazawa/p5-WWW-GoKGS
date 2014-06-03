@@ -64,11 +64,15 @@ sub scrape {
     my ( $self, @args ) = @_;
     my $result = $self->SUPER::scrape( @args );
 
-    for my $key (qw/calendar games zip_uri tgz_uri/) {
-        undef $result->{$key} unless exists $result->{$key};
-    }
+    %$result = (
+        games    => [],
+        zip_uri  => undef,
+        tgz_uri  => undef,
+        calendar => [],
+        %$result,
+    );
 
-    return $result unless $result->{calendar};
+    return $result unless @{$result->{calendar}};
 
     my @calendar;
     for my $calendar ( @{$result->{calendar}} ) {
@@ -80,13 +84,13 @@ sub scrape {
     }
 
     if ( @calendar == 1 and $calendar[0]{year} == 1970 ) { # KGS's bug
-        undef $result->{calendar};
+        @{$result->{calendar}} = ();
     }
     else {
         @{$result->{calendar}} = @calendar;
     }
 
-    return $result unless $result->{games};
+    return $result unless @{$result->{games}};
 
     my $date_filter = do {
         my $orig = $self->date_filter;
@@ -108,8 +112,8 @@ sub scrape {
         my $users = $game->{white}; # <td colspan="2">
         if ( @$users == 1 ) { # Type: Demonstration
             $game->{owner} = $users->[0];
-            $game->{white} = undef;
-            $game->{black} = undef;
+            $game->{white} = [];
+            $game->{black} = [];
         }
         elsif ( @$users == 3 ) { # Type: Review
             $game->{owner} = $users->[0];
@@ -132,7 +136,8 @@ sub scrape {
     }
     continue {
         $game->{sgf_uri}    = undef unless exists $game->{sgf_uri};
-        $game->{owner}      = undef unless exists $game->{owner};
+        $game->{tag}        = undef unless exists $game->{tag};
+        $game->{owner}      = {} unless exists $game->{owner};
         $game->{start_time} = $date_filter->( $game->{start_time} );
         $game->{setup}      =~ /^(\d+)\x{d7}\d+ (?:H(\d+))?$/;
         $game->{board_size} = $1;

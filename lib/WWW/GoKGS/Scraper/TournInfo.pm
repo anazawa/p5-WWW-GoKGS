@@ -37,9 +37,12 @@ sub scrape {
     my ( $self, @args ) = @_;
     my $result = $self->SUPER::scrape( @args );
 
-    for my $key (qw/name description links/) {
-        undef $result->{$key} unless exists $result->{$key};
-    }
+    %$result = (
+        name        => undef,
+        description => undef,
+        links       => {},
+        %$result,
+    );
 
     return $result unless $result->{description};
 
