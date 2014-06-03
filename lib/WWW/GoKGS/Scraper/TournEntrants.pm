@@ -55,26 +55,7 @@ sub scrape {
 
     return $result unless $result->{entrants};
 
-    if ( $result->{entrants}->[0] ) { # Swiss, McMahon, Double Elimination
-        my $preceding;
-        for my $entrant ( @{$result->{entrants}} ) {
-            $entrant->{position} =~ s/\(tie\)$//;
-            next unless exists $entrant->{score};
-            next if !$preceding or exists $entrant->{notes};
-            $entrant->{notes}    = $entrant->{sodos};
-            $entrant->{sodos}    = $entrant->{sos};
-            $entrant->{sos}      = $entrant->{score};
-            $entrant->{score}    = $entrant->{name};
-            $entrant->{position} =~ /^([a-zA-Z0-9]+)(?: \[([^\]]+)\])?$/;
-            $entrant->{name}     = $1;
-            $entrant->{rank}     = $2;
-            $entrant->{position} = $preceding->{position};
-        }
-        continue {
-            $preceding = $entrant;
-        }
-    }
-    else { # Round Robin
+    if ( !$result->{entrants}->[0] ) { # Round Robin
         shift @{$result->{entrants}};
 
         my @entrants;
@@ -93,7 +74,6 @@ sub scrape {
         }
 
         for my $entrant ( @entrants ) {
-            $entrant->{results} = undef unless $entrant->{number};
             $entrant->{name} =~ /^([a-zA-Z0-9]+)(?: \[([^\]]+)\])?$/;
             $entrant->{name} = $1;
             $entrant->{rank} = $2;
@@ -103,8 +83,8 @@ sub scrape {
         for my $a ( @entrants ) {
             next unless $a->{number};
             for my $b ( @entrants ) {
-                next unless $b->{number};
                 next if $b == $a;
+                next unless $b->{number};
                 $results{$a->{name}}{$b->{name}}
                     = $a->{results}->[$b->{number}-1];
             }
@@ -112,11 +92,116 @@ sub scrape {
 
         delete @{$_}{qw/number results/} for @entrants;
 
-        $result->{results} = \%results;
-        @{$result->{entrants}} = @entrants;
+        $result->{entrants} = \@entrants;
+        $result->{results}  = \%results;
+    }
+    elsif ( exists $result->{entrants}->[0]->{score} ) { # Swiss, McMahon
+        my $preceding;
+        for my $entrant ( @{$result->{entrants}} ) {
+            $entrant->{position} =~ s/\(tie\)$//;
+            next if !$preceding or exists $entrant->{notes};
+            $entrant->{notes}    = $entrant->{sodos};
+            $entrant->{sodos}    = $entrant->{sos};
+            $entrant->{sos}      = $entrant->{score};
+            $entrant->{score}    = $entrant->{name};
+            $entrant->{position} =~ /^([a-zA-Z0-9]+)(?: \[([^\]]+)\])?$/;
+            $entrant->{name}     = $1;
+            $entrant->{rank}     = $2;
+            $entrant->{position} = $preceding->{position};
+        }
+        continue {
+            $preceding = $entrant;
+        }
+    }
+    else { # Double Elimination
+    }
+
+    for my $entrant ( @{$result->{entrants}} ) {
+        for my $key (qw/name rank position standing notes score sos sodos/) {
+            undef $entrant->{$key} unless exists $entrant->{$key};
+        }
     }
 
     $result;
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+WWW::GoKGS::Scraper::TournEntrants - KGS Tournament Entrants
+
+=head1 SYNOPSIS
+
+  use WWW::GoKGS::Scraper::TournEntrants;
+
+  my $tourn_entrants = WWW::GoKGS::Scraper::TournEntrants->new;
+
+  my $result = $tourn_entrants->query(
+      id   => 762,
+      sort => 's',
+  );
+  # => {
+  #     name => 'KGS Meijin Qualifier October 2012',
+  #     entrants => [
+  #         {
+  #             name => 'foo',
+  #             rank => '2k',
+  #             standing => 'Winner',
+  #             ...
+  #         },
+  #         ...
+  #     ],
+  #     links => {
+  #        ...
+  #     },
+  # }
+
+=head1 DESCRIPTION
+
+=head2 ATTRIBUTES
+
+=over 4
+
+=item $URI = $tourn_entrants->base_uri
+
+Defaluts to C<http://www.gokgs.com/tournEntrants.jsp>.
+This attribute is read-only.
+
+=item $UserAgent = $tourn_entrants->user_agent
+
+=item $tourn_entrants->user_agent( LWP::UserAgent->new(...) )
+
+Can be used to get or set an L<LWP::UserAgent> object which is used to
+C<GET> the requested resource. Defaults to the C<LWP::UserAgent> object
+shared by L<Web::Scraper> users (C<$Web::Scraper::UserAgent>).
+
+=back
+
+=head2 METHODS
+
+=over 4
+
+=item $tourn_entrants->scrape
+
+=item $tourn_entrants->query
+
+=back
+
+=head1 SEE ALSO
+
+L<WWW::GoKGS>
+
+=head1 AUTHOR
+
+Ryo Anazawa (anazawa@cpan.org)
+
+=head1 LICENSE
+
+This module is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself. See L<perlartistic>.
+
+=cut
+

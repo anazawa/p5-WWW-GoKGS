@@ -96,6 +96,8 @@ This attribute is read-only.
 
 =item $UserAgent = $scraper->user_agent
 
+=item $scraper->user_agent( LWP::UserAgent->new(...) )
+
 Can be used to get or set an L<LWP::UserAgent> object which is used to
 C<GET> the requested resource. Defaults to the C<LWP::UserAgent> object
 shared by L<Web::Scraper> users (C<$Web::Scraper::UserAgent>).
