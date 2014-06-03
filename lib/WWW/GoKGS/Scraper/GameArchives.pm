@@ -155,7 +155,7 @@ __END__
 
 =head1 NAME
 
-WWW::GoKGS::Scraper::GameArchives - KGS Game Archives Scraper
+WWW::GoKGS::Scraper::GameArchives - KGS Game Archives
 
 =head1 SYNOPSIS
 

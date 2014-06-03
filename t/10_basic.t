@@ -78,6 +78,6 @@ subtest 'WWW::GoKGS' => sub {
     can_ok $gokgs, qw( scrape );
 
     throws_ok {
-        $gokgs->scrape('fooBar.jsp');
-    } qr{^Don't know how to scrape 'fooBar\.jsp'};
+        $gokgs->scrape('/fooBar.jsp');
+    } qr{^Don't know how to scrape '/fooBar\.jsp'};
 };
