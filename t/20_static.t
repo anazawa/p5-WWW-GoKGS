@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use Path::Class qw/dir/;
-use Test::More skip_all => '';
+use Test::More;
 use WWW::GoKGS::Scraper::GameArchives;
 use WWW::GoKGS::Scraper::Top100;
 use WWW::GoKGS::Scraper::TournList;
