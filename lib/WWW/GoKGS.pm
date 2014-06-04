@@ -28,6 +28,10 @@ sub html_filter {
     $_[0]->{html_filter} ||= sub { $_[0] };
 }
 
+sub result_filter {
+    $_[0]->{result_filter} ||= sub { $_[0] };
+}
+
 sub user_agent {
     my $self = shift;
     $self->{user_agent} ||= $self->_build_user_agent;
@@ -51,8 +55,9 @@ sub _build_scraper {
 
     +{ map { $_->base_uri->path => $_ } (
         WWW::GoKGS::Scraper::GameArchives->new(
-            user_agent  => $self->user_agent,
-            date_filter => $self->date_filter,
+            user_agent    => $self->user_agent,
+            date_filter   => $self->date_filter,
+            result_filter => $self->result_filter,
         ),
         WWW::GoKGS::Scraper::Top100->new(
             user_agent => $self->user_agent,

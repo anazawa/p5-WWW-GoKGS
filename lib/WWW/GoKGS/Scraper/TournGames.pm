@@ -77,11 +77,11 @@ sub scrape {
 
     return $result unless @{$result->{games}};
 
-    my ( @games, @byes );
+    my @games;
     for my $game ( @{$result->{games}} ) {
         my $maybe_bye = delete $game->{maybe_bye};
         if ( $maybe_bye =~ /^Bye(?: \([^)]+\))?$/ ) {
-            push @byes, {
+            push @{$result->{byes}}, {
                 type => $1 || 'System',
                 %{$game->{white}},
             };
@@ -91,8 +91,7 @@ sub scrape {
         }
     }
 
-    $result->{games} = \@games;
-    $result->{byes}  = \@byes;
+    @{$result->{games}} = @games;
 
     $result;
 }
