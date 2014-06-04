@@ -14,7 +14,6 @@ sub process_links {
 
         sub {
             my $date = shift;
-            return unless $date;
             my ( $mon, $mday, $yy, $hour, $min, $ampm )
                 = $date =~ m{^(\d\d?)/(\d\d?)/(\d\d) (\d\d?):(\d\d) (AM|PM)$};
             $orig->(do {
@@ -26,27 +25,26 @@ sub process_links {
     };
 
     my $round_number = sub {
-        m/^Round (\d+) / ? $1 : undef;
+        m/^Round (\d+) / ? int $1 : q{};
     };
 
     my $start_time = sub {
         my $time = m/ will start at (.*)$/ && $1;
-        $time ||= m/\(([^\-]+) -/ ? $1 : undef;
-        $time =~ tr/\x{a0}/ / if $time;
+        $time ||= m/\(([^\-]+) -/ ? $1 : q{};
+        $time =~ tr/\x{a0}/ /;
         $time;
     };
 
     my $end_time = sub {
-        my $time = m/- ([^)]+)\)$/ ? $1 : undef;
-        $time =~ tr/\x{a0}/ / if $time;
+        my $time = m/- ([^)]+)\)$/ ? $1 : q{};
+        $time =~ tr/\x{a0}/ /;
         $time;
     };
 
     my $round = scraper {
         process '.', 'round' => [ 'TEXT', $round_number ];
         process '.', 'start_time' => [ 'TEXT', $start_time, $date_filter ];
-        process '.', 'end_time' => [ 'TEXT', $end_time, $date_filter ];
-        process '.', 'uri' => [ 'TEXT', sub { undef } ]; # FIXME
+        process 'a', 'end_time' => [ 'TEXT', $end_time, $date_filter ];
         process 'a', 'uri' => '@href';
     };
 

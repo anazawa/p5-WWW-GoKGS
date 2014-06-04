@@ -124,6 +124,7 @@ sub scrape {
 
     for my $game ( @{$result->{games}} ) {
         next if exists $game->{black};
+
         my $users = $game->{white}; # <td colspan="2">
         if ( @$users == 1 ) { # Type: Demonstration
             $game->{owner} = $users->[0];
@@ -141,6 +142,7 @@ sub scrape {
         else {
             die 'Oops! Something went wrong';
         }
+
         $game->{tag}        = $game->{result} if exists $game->{result};
         $game->{result}     = $game->{type};
         $game->{type}       = $game->{start_time};
