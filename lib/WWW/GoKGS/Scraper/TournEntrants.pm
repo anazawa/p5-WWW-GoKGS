@@ -72,9 +72,7 @@ sub scrape {
         for my $entrant ( @entrants ) {
             $entrant->{name} =~ /^([a-zA-Z0-9]+)(?: \[([^\]]+)\])?$/;
             $entrant->{name} = $1;
-            $entrant->{rank} = $2 if $2;
-
-            delete $entrant->{notes} unless $entrant->{notes};
+            $entrant->{rank} = $2;
         }
 
         my %results;
@@ -113,15 +111,14 @@ sub scrape {
             $entrant->{sodos}    += 0;
             $entrant->{score}    += 0;
 
-            delete $entrant->{rank} unless $entrant->{rank};
-
             $preceding = $entrant;
         }
     }
     else { # Double Elimination
-        for my $entrant ( @{$result->{entrants}} ) {
-            delete $entrant->{rank} unless $entrant->{rank};
-        }
+    }
+
+    for my $entrant ( @{$result->{entrants}} ) {
+        delete $entrant->{rank} unless $entrant->{rank};
     }
 
     $result;

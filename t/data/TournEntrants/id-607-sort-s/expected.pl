@@ -16,12 +16,14 @@
     },
     {
       'name' => 'ManyFaces1',
+      'notes' => '',
       'position' => 3,
       'rank' => '2d',
       'score' => 1
     },
     {
       'name' => 'mogobot5',
+      'notes' => '',
       'position' => 3,
       'rank' => '-',
       'score' => 1
