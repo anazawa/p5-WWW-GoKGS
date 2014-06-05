@@ -1,5 +1,7 @@
 Revision history for Perl extension WWW::GoKGS.
 
+0.02 Jun 5th, 2014
+
   - Add Scraper::GameArchives#result_filter
   - Add Scraper::TournGames#result_filter
   - Add GoKGS#result_filter
