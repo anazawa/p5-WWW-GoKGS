@@ -75,8 +75,9 @@ sub _build_scraper {
             date_filter => $self->date_filter,
         ),
         WWW::GoKGS::Scraper::TournGames->new(
-            user_agent  => $self->user_agent,
-            date_filter => $self->date_filter,
+            user_agent    => $self->user_agent,
+            date_filter   => $self->date_filter,
+            result_filter => $self->result_filter,
         ),
     )};
 }
@@ -231,6 +232,28 @@ the filtered value. This attribute is read-only.
       date_filter => sub {
           my $date = shift; # => "2014-05-17T19:05Z"
           gmtime->strptime( $date, '%Y-%m-%dT%H:%MZ' );
+      }
+  );
+
+=item $CodeRef = $gokgs->result_filter
+
+=item $gokgs->result_filter( sub { my $result = shift; ... } )
+
+Can be used to get or set a game result filter. Defaults to an anonymous subref
+which just returns the given argument (C<sub { $_[0] }>). The callback is
+called with a game result string such as C<B+Resign>.
+The return value is used as the filtered value.
+
+  my $gokgs = WWW::GoKGS->new(
+      result_filter => sub {
+          my $result = shift; # => "B+Resign"
+
+          # I prefer "B+R" to "B+Resign", 
+          # while both of them are valid SGF-compatible format
+          return 'B+R' if $result eq 'B+Resign';
+          ...
+
+          $result;
       }
   );
 
