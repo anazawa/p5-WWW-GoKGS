@@ -578,7 +578,6 @@
       'black' => [
         {
           'name' => 'summerbake',
-          'rank' => 'summerbake',
           'uri' => bless( do{\(my $o = 'http://www.gokgs.com/gameArchives.jsp?user=summerbake&oldAccounts=y')}, 'URI::http' )
         }
       ],
@@ -683,7 +682,6 @@
       'black' => [
         {
           'name' => 'sadfdsf',
-          'rank' => 'sadfdsf',
           'uri' => bless( do{\(my $o = 'http://www.gokgs.com/gameArchives.jsp?user=sadfdsf&oldAccounts=y')}, 'URI::http' )
         }
       ],
@@ -758,7 +756,6 @@
       'white' => [
         {
           'name' => 'jims2420',
-          'rank' => 'jims2420',
           'uri' => bless( do{\(my $o = 'http://www.gokgs.com/gameArchives.jsp?user=jims2420&oldAccounts=y')}, 'URI::http' )
         }
       ]
@@ -800,7 +797,6 @@
       'white' => [
         {
           'name' => 'jbdys',
-          'rank' => 'jbdys',
           'uri' => bless( do{\(my $o = 'http://www.gokgs.com/gameArchives.jsp?user=jbdys&oldAccounts=y')}, 'URI::http' )
         }
       ]
@@ -978,7 +974,6 @@
       'black' => [
         {
           'name' => 'jims2420',
-          'rank' => 'jims2420',
           'uri' => bless( do{\(my $o = 'http://www.gokgs.com/gameArchives.jsp?user=jims2420&oldAccounts=y')}, 'URI::http' )
         }
       ],
@@ -1116,7 +1111,6 @@
       'white' => [
         {
           'name' => 'miut',
-          'rank' => 'miut',
           'uri' => bless( do{\(my $o = 'http://www.gokgs.com/gameArchives.jsp?user=miut&oldAccounts=y')}, 'URI::http' )
         }
       ]
@@ -1210,7 +1204,6 @@
       'black' => [
         {
           'name' => 'jims2420',
-          'rank' => 'jims2420',
           'uri' => bless( do{\(my $o = 'http://www.gokgs.com/gameArchives.jsp?user=jims2420&oldAccounts=y')}, 'URI::http' )
         }
       ],
@@ -1252,7 +1245,6 @@
       'black' => [
         {
           'name' => 'yung95',
-          'rank' => 'yung95',
           'uri' => bless( do{\(my $o = 'http://www.gokgs.com/gameArchives.jsp?user=yung95&oldAccounts=y')}, 'URI::http' )
         }
       ],
@@ -1541,7 +1533,6 @@
       'white' => [
         {
           'name' => 'umekiti',
-          'rank' => 'umekiti',
           'uri' => bless( do{\(my $o = 'http://www.gokgs.com/gameArchives.jsp?user=umekiti&oldAccounts=y')}, 'URI::http' )
         }
       ]
@@ -1604,7 +1595,6 @@
       'white' => [
         {
           'name' => 'petz',
-          'rank' => 'petz',
           'uri' => bless( do{\(my $o = 'http://www.gokgs.com/gameArchives.jsp?user=petz&oldAccounts=y')}, 'URI::http' )
         }
       ]
@@ -1995,7 +1985,6 @@
       'white' => [
         {
           'name' => 'orr7op8',
-          'rank' => 'orr7op8',
           'uri' => bless( do{\(my $o = 'http://www.gokgs.com/gameArchives.jsp?user=orr7op8&oldAccounts=y')}, 'URI::http' )
         }
       ]
@@ -2136,7 +2125,6 @@
       'black' => [
         {
           'name' => 'zxywv',
-          'rank' => 'zxywv',
           'uri' => bless( do{\(my $o = 'http://www.gokgs.com/gameArchives.jsp?user=zxywv&oldAccounts=y')}, 'URI::http' )
         }
       ],
@@ -2199,7 +2187,6 @@
       'black' => [
         {
           'name' => 'ssa',
-          'rank' => 'ssa',
           'uri' => bless( do{\(my $o = 'http://www.gokgs.com/gameArchives.jsp?user=ssa&oldAccounts=y')}, 'URI::http' )
         }
       ],
