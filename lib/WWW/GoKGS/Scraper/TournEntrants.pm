@@ -13,7 +13,7 @@ sub _build_base_uri {
 sub _build_scraper {
     my $self = shift;
     my $name = sub { s/ \[[^\]]+\]$// };
-    my $rank = sub { m/ \[([^\]]+)\]$/ ? $1 : q{} };
+    my $rank = sub { m/ \[([^\]]+)\]$/ ? $1 : undef };
 
     scraper {
         process '//h1', 'name' => [ 'TEXT', sub { s/ Players$// } ];

@@ -20,7 +20,7 @@ sub _build_scraper {
 
     my %user = (
         name => [ 'TEXT', sub { s/ \[[^\]]+\]$// } ],
-        rank => [ 'TEXT', sub { m/ \[([^\]]+)\]$/ ? $1 : q{} } ],
+        rank => [ 'TEXT', sub { m/ \[([^\]]+)\]$/ ? $1 : undef } ],
         uri  => '@href',
     );
 

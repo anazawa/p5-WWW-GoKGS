@@ -25,19 +25,19 @@ sub process_links {
     };
 
     my $round_number = sub {
-        m/^Round (\d+) / ? int $1 : q{};
+        m/^Round (\d+) / ? int $1 : undef;
     };
 
     my $start_time = sub {
         my $time = m/ will start at (.*)$/ && $1;
-        $time ||= m/\(([^\-]+) -/ ? $1 : q{};
-        $time =~ tr/\x{a0}/ /;
+        $time ||= m/\(([^\-]+) -/ ? $1 : undef;
+        $time =~ tr/\x{a0}/ / if $time;
         $time;
     };
 
     my $end_time = sub {
-        my $time = m/- ([^)]+)\)$/ ? $1 : q{};
-        $time =~ tr/\x{a0}/ /;
+        my $time = m/- ([^)]+)\)$/ ? $1 : undef;
+        $time =~ tr/\x{a0}/ / if $time;
         $time;
     };
 

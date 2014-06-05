@@ -13,7 +13,7 @@ sub _build_base_uri {
 sub _build_scraper {
     my $self = shift;
     my $name = sub { s/ Round \d+ Games$// };
-    my $round = sub { m/ Round (\d+) Games$/ ? int $1 : q{} };
+    my $round = sub { m/ Round (\d+) Games$/ ? int $1 : undef };
 
     my $player = sub {
         m/^([a-zA-Z0-9]+)(?: \[([^\]]+)\])?$/ 
