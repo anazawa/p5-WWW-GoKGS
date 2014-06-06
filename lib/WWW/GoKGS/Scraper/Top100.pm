@@ -22,6 +22,12 @@ sub _build_scraper {
     };
 }
 
+sub scrape {
+    my ( $self, @args ) = @_;
+    local $SIG{__WARN__} = sub { die $_[0] };
+    $self->SUPER::scrape( @args );
+}
+
 1;
 
 __END__

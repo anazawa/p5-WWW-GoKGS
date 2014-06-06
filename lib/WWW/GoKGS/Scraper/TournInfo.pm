@@ -52,6 +52,7 @@ sub _assoc_filter {
 
 sub scrape {
     my ( $self, @args ) = @_;
+    local $SIG{__WARN__} = sub { die $_[0] };
     my $result = $self->SUPER::scrape( @args );
 
     return $result unless $result->{description};

@@ -54,32 +54,95 @@ sub _build_scraper {
     my $self = shift;
 
     +{ map { $_->base_uri->path => $_ } (
-        WWW::GoKGS::Scraper::GameArchives->new(
-            user_agent    => $self->user_agent,
-            date_filter   => $self->date_filter,
-            result_filter => $self->result_filter,
-        ),
-        WWW::GoKGS::Scraper::Top100->new(
-            user_agent => $self->user_agent,
-        ),
-        WWW::GoKGS::Scraper::TournList->new(
-            user_agent => $self->user_agent,
-        ),
-        WWW::GoKGS::Scraper::TournInfo->new(
-            user_agent  => $self->user_agent,
-            date_filter => $self->date_filter,
-            html_filter => $self->html_filter,
-        ),
-        WWW::GoKGS::Scraper::TournEntrants->new(
-            user_agent  => $self->user_agent,
-            date_filter => $self->date_filter,
-        ),
-        WWW::GoKGS::Scraper::TournGames->new(
-            user_agent    => $self->user_agent,
-            date_filter   => $self->date_filter,
-            result_filter => $self->result_filter,
-        ),
+        $self->_build_game_archives,
+        $self->_build_top_100,
+        $self->_build_tourn_list,
+        $self->_build_tourn_info,
+        $self->_build_tourn_entrants,
+        $self->_build_tourn_games,
     )};
+}
+
+sub _build_game_archives {
+    my $self = shift;
+
+    my $game_archives = WWW::GoKGS::Scraper::GameArchives->new(
+        user_agent => $self->user_agent,
+    );
+
+    $game_archives->add_filter( 'games[].start_time' => $self->date_filter );
+
+    $game_archives;
+}
+
+sub _build_tourn_list {
+    my $self = shift;
+
+    WWW::GoKGS::Scraper::TournList->new(
+        user_agent => $self->user_agent,
+    );
+}
+
+sub _build_top_100 {
+    my $self = shift;
+
+    WWW::GoKGS::Scraper::Top100->new(
+        user_agent => $self->user_agent,
+    );
+}
+
+sub _build_tourn_info {
+    my $self = shift;
+
+    my $tourn_info = WWW::GoKGS::Scraper::TournInfo->new(
+        user_agent => $self->user_agent,
+    );
+
+    $tourn_info->add_filter( 'description' => $self->html_filter );
+
+    for my $path (
+        'links.rounds[].start_time',
+        'links.rounds[].end_time',
+    ) {
+        $tourn_info->add_filter( $path => $self->date_filter );
+    }
+
+    $tourn_info;
+}
+
+sub _build_tourn_entrants {
+    my $self = shift;
+
+    my $tourn_entrants = WWW::GoKGS::Scraper::TournEntrants->new(
+        user_agent => $self->user_agent,
+    );
+
+    for my $path (
+        'links.rounds[].start_time',
+        'links.rounds[].end_time',
+    ) {
+        $tourn_entrants->add_filter( $path => $self->date_filter );
+    }
+
+    $tourn_entrants;
+}
+
+sub _build_tourn_games {
+    my $self = shift;
+
+    my $tourn_games = WWW::GoKGS::Scraper::TournGames->new(
+        user_agent => $self->user_agent,
+    );
+
+    for my $path (
+        'games[].start_time',
+        'links.rounds[].start_time',
+        'links.rounds[].end_time',
+    ) {
+        $tourn_games->add_filter( $path => $self->date_filter );
+    }
+
+    $tourn_games;
 }
 
 sub game_archives {
