@@ -2,6 +2,7 @@ package WWW::GoKGS::Scraper;
 use strict;
 use warnings;
 use Carp qw/croak/;
+use Web::Scraper qw//;
 
 sub new {
     my $class = shift;
@@ -21,7 +22,7 @@ sub base_uri {
 }
 
 sub _build_base_uri {
-    croak 'call to abstract method ', __PACKAGE__, '::base_uri';
+    croak 'call to abstract method ', __PACKAGE__, '::_build_base_uri';
 }
 
 sub _scraper {
@@ -48,6 +49,33 @@ sub query {
     my $url = $self->base_uri->clone;
     $url->query_form( @args );
     $self->scrape( $url );
+}
+
+sub _filter {
+    my $self = shift;
+    $self->{filter} ||= $self->_build_filter;
+}
+
+sub _build_filter { +{} }
+
+sub get_filter {
+    my ( $self, $key ) = @_;
+    @{ $self->_filter->{$key} || [] };
+}
+
+sub add_filter {
+    my ( $self, $key, $filter ) = @_;
+    push @{ $self->_filter->{$key} ||= [] }, $filter;
+}
+
+sub run_filter {
+    my ( $self, $key, $value ) = @_;
+
+    for my $filter ( $self->get_filter($key) ) {
+        $value = Web::Scraper::run_filter( $value, $filter );
+    }
+
+    $value;
 }
 
 1;

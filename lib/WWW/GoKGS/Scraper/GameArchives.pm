@@ -12,12 +12,6 @@ sub _build_base_uri {
 sub _build_scraper {
     my $self = shift;
 
-    my $month2num = do {
-        my @months = qw( Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec );
-        my %month2num; @month2num{ @months } = ( 1..12 );
-        sub { $month2num{$_[0]} };
-    };
-
     my %user = (
         name => [ 'TEXT', sub { s/ \[[^\]]+\]$// } ],
         rank => [ 'TEXT', sub { m/ \[([^\]]+)\]$/ ? $1 : undef } ],
@@ -40,8 +34,8 @@ sub _build_scraper {
         process 'td', 'year' => 'TEXT';
         process qq{//following-sibling::td[text()!="\x{a0}"]},
                 'month[]' => scraper {
-                    process '.', 'month' => [ 'TEXT', $month2num ];
-                    process 'a', 'uri'   => '@href'; };
+                    process '.', 'month' => [ 'TEXT', $self->get_filter('calendar[].month') ];
+                    process 'a', 'uri' => '@href'; };
     };
 
     scraper {
@@ -51,6 +45,41 @@ sub _build_scraper {
         process '//a[contains(@href, ".tar.gz")]', 'tgz_uri' => '@href';
         process '//table[descendant::tr/th/text()="Year"]//following-sibling::tr',
                 'calendar[]' => $calendar;
+    };
+}
+
+sub _build_filter {
+    my $self = shift;
+
+    {
+        'games[].start_time' => [sub {
+            my $date = shift;
+            my ( $mon, $mday, $yy, $hour, $min, $ampm )
+                = $date =~ m{^(\d\d?)/(\d\d?)/(\d\d) (\d\d?):(\d\d) (AM|PM)$};
+            sprintf '%04d-%02d-%02dT%02d:%02dZ',
+                    $yy + 2000, $mon, $mday,
+                    $ampm eq 'PM' ? $hour + 12 : $hour, $min;
+        }],
+        'games[].result' => [do {
+            # use SGF-compatible format whenever possible
+            my %canonical = (
+                'W+Res.'  => 'W+Resign',
+                'B+Res.'  => 'B+Resign',
+                'W+Forf.' => 'W+Forfeit',
+                'B+Forf.' => 'B+Forfeit',
+                'Jigo'    => 'Draw',
+            );
+
+            sub {
+                my $result = shift;
+                $canonical{$result} || $result;
+            };
+        }],
+        'calendar[].month' => [do {
+            my @months = qw( Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec );
+            my %month2num; @month2num{ @months } = ( 1..12 );
+            sub { $month2num{$_[0]} };
+        }],
     };
 }
 
@@ -67,6 +96,12 @@ sub result_filter {
 }
 
 sub scrape {
+    my ( $self, @args ) = @_;
+    local $SIG{__WARN__} = sub { die $_[0] };
+    $self->_scrape( @args );
+}
+
+sub _scrape {
     my ( $self, @args ) = @_;
     my $result = $self->SUPER::scrape( @args );
 
@@ -88,39 +123,6 @@ sub scrape {
     }
 
     return $result unless $result->{games};
-
-    my $date_filter = do {
-        my $orig = $self->date_filter;
-
-        sub {
-            my $date = shift;
-            my ( $mon, $mday, $yy, $hour, $min, $ampm )
-                = $date =~ m{^(\d\d?)/(\d\d?)/(\d\d) (\d\d?):(\d\d) (AM|PM)$};
-            $orig->(do {
-                sprintf '%04d-%02d-%02dT%02d:%02dZ',
-                        $yy + 2000, $mon, $mday,
-                        $ampm eq 'PM' ? $hour + 12 : $hour, $min;
-            });
-        };
-    };
-
-    my $result_filter = do {
-        my $orig = $self->result_filter;
-        
-        # use SGF-compatible format whenever possible
-        my %canonical = (
-            'W+Res.'  => 'W+Resign',
-            'B+Res.'  => 'B+Resign',
-            'W+Forf.' => 'W+Forfeit',
-            'B+Forf.' => 'B+Forfeit',
-            'Jigo'    => 'Draw',
-        );
-
-        sub {
-            my $r = shift;
-            $orig->( $canonical{$r} || $r );
-        };
-    };
 
     for my $game ( @{$result->{games}} ) {
         next if exists $game->{black};
@@ -150,8 +152,8 @@ sub scrape {
         $game->{setup}      = $game->{maybe_setup};
     }
     continue {
-        $game->{start_time} = $date_filter->( $game->{start_time} );
-        $game->{result}     = $result_filter->( $game->{result} );
+        $game->{start_time} = $self->run_filter( 'games[].start_time', $game->{start_time} );
+        $game->{result}     = $self->run_filter( 'games[].result', $game->{result} );
         $game->{setup}      =~ /^(\d+)\x{d7}\d+ (?:H(\d+))?$/;
         $game->{board_size} = int $1;
         $game->{handicap}   = int $2 if $2;

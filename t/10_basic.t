@@ -60,6 +60,7 @@ subtest 'WWW::GoKGS::Scraper::TournGames' => sub {
     isa_ok $tourn_games, 'WWW::GoKGS::Scraper::TournGames';
     is $tourn_games->base_uri, 'http://www.gokgs.com/tournGames.jsp';
     isa_ok $tourn_games->date_filter, 'CODE';
+    isa_ok $tourn_games->result_filter, 'CODE';
     isa_ok $tourn_games->user_agent, 'LWP::UserAgent';
     can_ok $tourn_games, qw( scrape query );
 };
