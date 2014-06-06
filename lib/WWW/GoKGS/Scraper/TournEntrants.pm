@@ -146,7 +146,7 @@ WWW::GoKGS::Scraper::TournEntrants - KGS Tournament Entrants
   #     name => 'KGS Meijin Qualifier October 2012',
   #     entrants => [
   #         {
-  #             name     => 'kvv',
+  #             name     => 'foo',
   #             rank     => '5d',
   #             standing => 'Winner'
   #         },
