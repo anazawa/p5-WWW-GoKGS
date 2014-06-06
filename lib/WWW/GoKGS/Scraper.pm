@@ -64,8 +64,16 @@ sub get_filter {
 }
 
 sub add_filter {
-    my ( $self, $key, $filter ) = @_;
-    push @{ $self->_filter->{$key} ||= [] }, $filter;
+    my ( $self, @pairs ) = @_;
+    my $filter = $self->_filter;
+
+    croak "Odd number of arguments passed to 'add_filter'" if @pairs % 2;
+
+    while ( my ($key, $value) = splice @pairs, 0, 2 ) {
+        push @{ $filter->{$key} ||= [] }, $value;
+    }
+
+    return;
 }
 
 sub run_filter {

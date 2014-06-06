@@ -70,23 +70,25 @@ sub _build_game_archives {
         user_agent => $self->user_agent,
     );
 
-    $game_archives->add_filter( 'games[].start_time' => $self->date_filter );
+    $game_archives->add_filter(
+        'games[].start_time' => $self->date_filter,
+    );
 
     $game_archives;
-}
-
-sub _build_tourn_list {
-    my $self = shift;
-
-    WWW::GoKGS::Scraper::TournList->new(
-        user_agent => $self->user_agent,
-    );
 }
 
 sub _build_top_100 {
     my $self = shift;
 
     WWW::GoKGS::Scraper::Top100->new(
+        user_agent => $self->user_agent,
+    );
+}
+
+sub _build_tourn_list {
+    my $self = shift;
+
+    WWW::GoKGS::Scraper::TournList->new(
         user_agent => $self->user_agent,
     );
 }
@@ -98,14 +100,11 @@ sub _build_tourn_info {
         user_agent => $self->user_agent,
     );
 
-    $tourn_info->add_filter( 'description' => $self->html_filter );
-
-    for my $path (
-        'links.rounds[].start_time',
-        'links.rounds[].end_time',
-    ) {
-        $tourn_info->add_filter( $path => $self->date_filter );
-    }
+    $tourn_info->add_filter(
+        'description' => $self->html_filter,
+        'links.rounds[].start_time' => $self->date_filter,
+        'links.rounds[].end_time'   => $self->date_filter,
+    );
 
     $tourn_info;
 }
@@ -117,12 +116,10 @@ sub _build_tourn_entrants {
         user_agent => $self->user_agent,
     );
 
-    for my $path (
-        'links.rounds[].start_time',
-        'links.rounds[].end_time',
-    ) {
-        $tourn_entrants->add_filter( $path => $self->date_filter );
-    }
+    $tourn_entrants->add_filter(
+        'links.rounds[].start_time' => $self->date_filter,
+        'links.rounds[].end_time'   => $self->date_filter,
+    );
 
     $tourn_entrants;
 }
@@ -134,13 +131,11 @@ sub _build_tourn_games {
         user_agent => $self->user_agent,
     );
 
-    for my $path (
-        'games[].start_time',
-        'links.rounds[].start_time',
-        'links.rounds[].end_time',
-    ) {
-        $tourn_games->add_filter( $path => $self->date_filter );
-    }
+    $tourn_games->add_filter(
+        'games[].start_time' => $self->date_filter,
+        'links.rounds[].start_time' => $self->date_filter,
+        'links.rounds[].end_time'   => $self->date_filter,
+    );
 
     $tourn_games;
 }
