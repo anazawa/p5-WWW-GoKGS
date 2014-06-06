@@ -4,6 +4,7 @@ use warnings;
 use parent qw/WWW::GoKGS::Scraper/;
 use URI;
 use Web::Scraper;
+use WWW::GoKGS::Scraper::Filters qw/datetime/;
 use WWW::GoKGS::Scraper::TournLinks qw/process_links/;
 
 sub _build_base_uri {
@@ -21,14 +22,22 @@ sub _build_scraper {
             : undef;
     };
 
-    my $start_time = sub {
-        my $date = shift;
-        my ( $mon, $mday, $yy, $hour, $min, $ampm )
-            = $date =~ m{^(\d\d?)/(\d\d?)/(\d\d) (\d\d?):(\d\d) (AM|PM)$};
-        sprintf '%04d-%02d-%02dT%02d:%02dZ',
-                $yy + 2000, $mon, $mday,
-                $ampm eq 'PM' ? $hour + 12 : $hour, $min;
+    my $result = do {
+        # use SGF-compatible format whenever possible
+        my %canonical = (
+            'W+Res.'  => 'W+Resign',
+            'B+Res.'  => 'B+Resign',
+            'W+Forf.' => 'W+Forfeit',
+            'B+Forf.' => 'B+Forfeit',
+            'Jigo'    => 'Draw',
+        );
+
+        sub {
+            my $r = shift;
+            $canonical{$r} || $r;
+        };
     };
+
 
     my $game = scraper {
         process '//td[1]/a', 'sgf_uri' => '@href';
@@ -36,8 +45,8 @@ sub _build_scraper {
         process '//td[3]', 'black' => [ 'TEXT', $player ];
         process '//td[3]', 'maybe_bye' => 'TEXT';
         process '//td[4]', 'setup' => 'TEXT';
-        process '//td[5]', 'start_time' => [ 'TEXT', $start_time, $self->date_filter ];
-        process '//td[6]', 'result' => 'TEXT';
+        process '//td[5]', 'start_time' => [ 'TEXT', $self->get_filter('games[].start_time') ];
+        process '//td[6]', 'result' => [ 'TEXT', $result ];
     };
 
     scraper {
@@ -47,7 +56,8 @@ sub _build_scraper {
                 'games[]' => $game;
         process '//a[text()="Previous round"]', 'previous_round_uri' => '@href';
         process '//a[text()="Next round"]', 'next_round_uri' => '@href';
-        process_links date_filter => $self->date_filter;
+        process_links $self->_assoc_filter('links.rounds[].start_time'),
+                      $self->_assoc_filter('links.rounds[].end_time');
     };
 }
 
@@ -63,7 +73,29 @@ sub result_filter {
     $self->{result_filter} ||= sub { $_[0] };
 }
 
+sub _build_filter {
+    my $self = shift;
+
+    {
+        'games[].start_time' => [ \&datetime ],
+        'links.rounds[].start_time' => [ \&datetime ],
+        'links.rounds[].end_time'   => [ \&datetime ],
+    };
+}
+
+sub _assoc_filter {
+    my ( $self, $key ) = @_;
+    my @filters = $self->get_filter( $key );
+    @filters ? ( $key, \@filters ) : ();
+}
+
 sub scrape {
+    my ( $self, @args ) = @_;
+    local $SIG{__WARN__} = sub { die $_[0] };
+    $self->_scrape( @args );
+}
+
+sub _scrape {
     my ( $self, @args ) = @_;
     my $result = $self->SUPER::scrape( @args );
 
@@ -83,26 +115,7 @@ sub scrape {
         }
     }
 
-    my $result_filter = do {
-        my $orig = $self->result_filter;
-        
-        # use SGF-compatible format whenever possible
-        my %canonical = (
-            'W+Res.'  => 'W+Resign',
-            'B+Res.'  => 'B+Resign',
-            'W+Forf.' => 'W+Forfeit',
-            'B+Forf.' => 'B+Forfeit',
-            'Jigo'    => 'Draw',
-        );
-
-        sub {
-            my $r = shift;
-            $orig->( $canonical{$r} || $r );
-        };
-    };
-
     for my $game ( @games ) {
-        $game->{result}     = $result_filter->( $game->{result} );
         $game->{setup}      =~ /^(\d+)\x{d7}\d+ (?:H(\d+))?$/;
         $game->{board_size} = int $1;
         $game->{handicap}   = int $2 if $2;

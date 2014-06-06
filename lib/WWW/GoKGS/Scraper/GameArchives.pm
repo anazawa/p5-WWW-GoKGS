@@ -4,6 +4,7 @@ use warnings;
 use parent qw/WWW::GoKGS::Scraper/;
 use URI;
 use Web::Scraper;
+use WWW::GoKGS::Scraper::Filters qw/datetime/;
 
 sub _build_base_uri {
     URI->new('http://www.gokgs.com/gameArchives.jsp');
@@ -11,6 +12,12 @@ sub _build_base_uri {
 
 sub _build_scraper {
     my $self = shift;
+
+    my $month2num = do {
+        my @months = qw( Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec );
+        my %month2num; @month2num{ @months } = ( 1..12 );
+        sub { $month2num{$_[0]} };
+    };
 
     my %user = (
         name => [ 'TEXT', sub { s/ \[[^\]]+\]$// } ],
@@ -34,7 +41,7 @@ sub _build_scraper {
         process 'td', 'year' => 'TEXT';
         process qq{//following-sibling::td[text()!="\x{a0}"]},
                 'month[]' => scraper {
-                    process '.', 'month' => [ 'TEXT', $self->get_filter('calendar[].month') ];
+                    process '.', 'month' => [ 'TEXT', $month2num ];
                     process 'a', 'uri' => '@href'; };
     };
 
@@ -52,34 +59,7 @@ sub _build_filter {
     my $self = shift;
 
     {
-        'games[].start_time' => [sub {
-            my $date = shift;
-            my ( $mon, $mday, $yy, $hour, $min, $ampm )
-                = $date =~ m{^(\d\d?)/(\d\d?)/(\d\d) (\d\d?):(\d\d) (AM|PM)$};
-            sprintf '%04d-%02d-%02dT%02d:%02dZ',
-                    $yy + 2000, $mon, $mday,
-                    $ampm eq 'PM' ? $hour + 12 : $hour, $min;
-        }],
-        'games[].result' => [do {
-            # use SGF-compatible format whenever possible
-            my %canonical = (
-                'W+Res.'  => 'W+Resign',
-                'B+Res.'  => 'B+Resign',
-                'W+Forf.' => 'W+Forfeit',
-                'B+Forf.' => 'B+Forfeit',
-                'Jigo'    => 'Draw',
-            );
-
-            sub {
-                my $result = shift;
-                $canonical{$result} || $result;
-            };
-        }],
-        'calendar[].month' => [do {
-            my @months = qw( Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec );
-            my %month2num; @month2num{ @months } = ( 1..12 );
-            sub { $month2num{$_[0]} };
-        }],
+        'games[].start_time' => [ \&datetime ],
     };
 }
 
@@ -124,6 +104,14 @@ sub _scrape {
 
     return $result unless $result->{games};
 
+    my %canonical_result = (
+        'W+Res.'  => 'W+Resign',
+        'B+Res.'  => 'B+Resign',
+        'W+Forf.' => 'W+Forfeit',
+        'B+Forf.' => 'B+Forfeit',
+        'Jigo'    => 'Draw',
+    );
+
     for my $game ( @{$result->{games}} ) {
         next if exists $game->{black};
 
@@ -152,8 +140,13 @@ sub _scrape {
         $game->{setup}      = $game->{maybe_setup};
     }
     continue {
-        $game->{start_time} = $self->run_filter( 'games[].start_time', $game->{start_time} );
-        $game->{result}     = $self->run_filter( 'games[].result', $game->{result} );
+        $game->{start_time}
+            = $self->run_filter( 'games[].start_time', $game->{start_time} );
+
+        # use SGF-compatible format whenever possible
+        $game->{result}
+            = $canonical_result{$game->{result}} || $game->{result};
+
         $game->{setup}      =~ /^(\d+)\x{d7}\d+ (?:H(\d+))?$/;
         $game->{board_size} = int $1;
         $game->{handicap}   = int $2 if $2;

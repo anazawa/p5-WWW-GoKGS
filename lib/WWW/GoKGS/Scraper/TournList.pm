@@ -18,7 +18,7 @@ sub _build_scraper {
     );
 
     my %year_index = (
-        year => 'TEXT',
+        year => [ 'TEXT', sub { int } ],
         uri  => '@href',
     );
 
@@ -34,6 +34,12 @@ sub _build_scraper {
 
 sub scrape {
     my ( $self, @args ) = @_;
+    local $SIG{__WARN__} = sub { die $_[0] };
+    $self->_scrape( @args );
+}
+
+sub _scrape {
+    my ( $self, @args ) = @_;
     my $result = $self->SUPER::scrape( @args );
     my $year_index = $result->{year_index};
 
@@ -46,8 +52,8 @@ sub scrape {
     return $result unless @years;
 
     for my $i ( 0 .. @years-1 ) {
-        next if $year_index->[$i] and $year_index->[$i]->{year} eq $years[$i];
-        splice @$year_index, $i, 0, { year => $years[$i] };
+        next if $year_index->[$i] and $year_index->[$i]->{year} == $years[$i];
+        splice @$year_index, $i, 0, { year => int $years[$i] };
         last;
     }
 

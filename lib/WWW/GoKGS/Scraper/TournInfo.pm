@@ -4,6 +4,7 @@ use warnings;
 use parent qw/WWW::GoKGS::Scraper/;
 use URI;
 use Web::Scraper;
+use WWW::GoKGS::Scraper::Filters qw/datetime/;
 use WWW::GoKGS::Scraper::TournLinks qw/process_links/;
 
 sub _build_base_uri {
@@ -17,7 +18,8 @@ sub _build_scraper {
         process '//h1', 'name' => [ 'TEXT', sub { s/ \([^)]+\)$// } ];
         process '//node()[preceding-sibling::h1 and following-sibling::div]',
                 'description[]' => sub { $_[0]->as_XML };
-        process_links date_filter => $self->date_filter;
+        process_links $self->_assoc_filter('links.rounds[].start_time'),
+                      $self->_assoc_filter('links.rounds[].end_time');
     };
 }
 
@@ -33,13 +35,28 @@ sub date_filter {
     $self->{date_filter} ||= sub { $_[0] };
 }
 
+sub _build_filter {
+    my $self = shift;
+
+    {
+        'links.rounds[].start_time' => [ \&datetime ],
+        'links.rounds[].end_time'   => [ \&datetime ],
+    };
+}
+
+sub _assoc_filter {
+    my ( $self, $key ) = @_;
+    my @filters = $self->get_filter( $key );
+    @filters ? ( $key, \@filters ) : ();
+}
+
 sub scrape {
     my ( $self, @args ) = @_;
     my $result = $self->SUPER::scrape( @args );
 
     return $result unless $result->{description};
 
-    $result->{description} = $self->html_filter->(do {
+    $result->{description} = $self->run_filter('description', do {
         join q{}, @{$result->{description}};
     });
 
