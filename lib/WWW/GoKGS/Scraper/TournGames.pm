@@ -152,6 +152,14 @@ WWW::GoKGS::Scraper::TournGames - Games of the KGS tournament
   #         },
   #         ...
   #     ],
+  #     byes = [
+  #         {
+  #             name => 'baz',
+  #             rank => '2d',
+  #             type => 'System'
+  #         }
+  #     ],
+  #     next_round_uri => '/tournGames.jsp?id=762&round=2',
   #     links => {
   #         entrants => [
   #             {
