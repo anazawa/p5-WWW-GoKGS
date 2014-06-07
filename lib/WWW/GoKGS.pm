@@ -12,7 +12,7 @@ use WWW::GoKGS::Scraper::TournGames;
 use WWW::GoKGS::Scraper::TournInfo;
 use WWW::GoKGS::Scraper::TournList;
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 sub new {
     my $class = shift;
