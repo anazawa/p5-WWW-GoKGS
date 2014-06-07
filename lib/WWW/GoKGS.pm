@@ -41,22 +41,9 @@ sub html_filter {
     $_[0]->{html_filter} ||= sub { $_[0] };
 }
 
-sub _scraper {
+sub game_archives {
     my $self = shift;
-    $self->{scraper} ||= $self->_build_scraper;
-}
-
-sub _build_scraper {
-    my $self = shift;
-
-    +{ map { $_->base_uri->path => $_ } (
-        $self->_build_game_archives,
-        $self->_build_top_100,
-        $self->_build_tourn_list,
-        $self->_build_tourn_info,
-        $self->_build_tourn_entrants,
-        $self->_build_tourn_games,
-    )};
+    $self->{game_archives} ||= $self->_build_game_archives;
 }
 
 sub _build_game_archives {
@@ -73,6 +60,11 @@ sub _build_game_archives {
     $game_archives;
 }
 
+sub top_100 {
+    my $self = shift;
+    $self->{top_100} ||= $self->_build_top_100;
+}
+
 sub _build_top_100 {
     my $self = shift;
 
@@ -81,12 +73,22 @@ sub _build_top_100 {
     );
 }
 
+sub tourn_list {
+    my $self = shift;
+    $self->{tourn_list} ||= $self->_build_tourn_list;
+}
+
 sub _build_tourn_list {
     my $self = shift;
 
     WWW::GoKGS::Scraper::TournList->new(
         user_agent => $self->user_agent,
     );
+}
+
+sub tourn_info {
+    my $self = shift;
+    $self->{tourn_info} ||= $self->_build_tourn_info;
 }
 
 sub _build_tourn_info {
@@ -105,6 +107,11 @@ sub _build_tourn_info {
     $tourn_info;
 }
 
+sub tourn_entrants {
+    my $self = shift;
+    $self->{tourn_entrants} ||= $self->_build_tourn_entrants;
+}
+
 sub _build_tourn_entrants {
     my $self = shift;
 
@@ -118,6 +125,11 @@ sub _build_tourn_entrants {
     );
 
     $tourn_entrants;
+}
+
+sub tourn_games {
+    my $self = shift;
+    $self->{tourn_games} ||= $self->_build_tourn_games;
 }
 
 sub _build_tourn_games {
@@ -136,28 +148,22 @@ sub _build_tourn_games {
     $tourn_games;
 }
 
-sub game_archives {
-    $_[0]->_scraper->{'/gameArchives.jsp'};
+sub _scraper {
+    my $self = shift;
+    $self->{scraper} ||= $self->_build_scraper;
 }
 
-sub top_100 {
-    $_[0]->_scraper->{'/top100.jsp'};
-}
+sub _build_scraper {
+    my $self = shift;
 
-sub tourn_list {
-    $_[0]->_scraper->{'/tournList.jsp'};
-}
-
-sub tourn_info {
-    $_[0]->_scraper->{'/tournInfo.jsp'};
-}
-
-sub tourn_entrants {
-    $_[0]->_scraper->{'/tournEntrants.jsp'};
-}
-
-sub tourn_games {
-    $_[0]->_scraper->{'/tournGames.jsp'};
+    +{ map { $_->base_uri->path => $_ } (
+        $self->game_archives,
+        $self->top_100,
+        $self->tourn_list,
+        $self->tourn_info,
+        $self->tourn_entrants,
+        $self->tourn_games,
+    )};
 }
 
 sub scrape {
