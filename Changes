@@ -1,5 +1,7 @@
 Revision history for Perl extension WWW::GoKGS.
 
+0.04 Jun 7th, 2014
+
    - Add Scraper#get_filter, #add_filter and #run_filter
    - Scraper#scrape throws an exception if warnings are caught
 
