@@ -145,6 +145,23 @@ shared by L<Web::Scraper> users (C<$Web::Scraper::UserAgent>).
 
 =over 4
 
+=item @filters = $scraper->get_filter( $key )
+
+Returns all the filters associated with C<$key>.
+
+=item $scraper->add_filter( $key => $filter )
+
+=item $scraper->add_filter( $k1 => $f1, $k2 => $f2, ... )
+
+Pushes C<$filter> onto the filter stack specified by C<$key>.
+You can also push multiple filters in one C<add_filter> call.
+C<$filter> can be either a filter class name or a subref.
+See L<Web::Scraper::Filter> for details.
+
+=item $filtered_value = $scraper->run_filter( $key, $value )
+
+Executes all the filters associated with C<$key> on C<$value>.
+
 =item $scraper->scrape( URI->new(...) )
 
 =item $scraper->scrape( HTTP::Response->new(...) )
