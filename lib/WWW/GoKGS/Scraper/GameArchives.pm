@@ -63,18 +63,6 @@ sub _build_filter {
     };
 }
 
-sub date_filter {
-    my $self = shift;
-    $self->{date_filter} = shift if @_;
-    $self->{date_filter} ||= sub { $_[0] };
-}
-
-sub result_filter {
-    my $self = shift;
-    $self->{result_filter} = shift if @_;
-    $self->{result_filter} ||= sub { $_[0] };
-}
-
 sub scrape {
     my ( $self, @args ) = @_;
     local $SIG{__WARN__} = sub { die $_[0] };
@@ -233,8 +221,8 @@ or a subref. See L<Web::Scraper::Filter> for details.
 
   $game_archives->add_filter(
       'games[].start_time' => sub {
-          my $date = shift; # => "2014-05-17T19:05Z"
-          gmtime->strptime( $date, '%Y-%m-%dT%H:%MZ' );
+          my $start_time = shift; # => "2014-05-17T19:05Z"
+          gmtime->strptime( $start_time, '%Y-%m-%dT%H:%MZ' );
       }
   );
 

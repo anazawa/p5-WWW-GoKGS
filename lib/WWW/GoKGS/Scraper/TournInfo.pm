@@ -23,18 +23,6 @@ sub _build_scraper {
     };
 }
 
-sub html_filter {
-    my $self = shift;
-    $self->{html_filter} = shift if @_;
-    $self->{html_filter} ||= sub { $_[0] };
-}
-
-sub date_filter {
-    my $self = shift;
-    $self->{date_filter} = shift if @_;
-    $self->{date_filter} ||= sub { $_[0] };
-}
-
 sub _build_filter {
     my $self = shift;
 
@@ -128,43 +116,42 @@ Can be used to get or set an L<LWP::UserAgent> object which is used to
 C<GET> the requested resource. Defaults to the C<LWP::UserAgent> object
 shared by L<Web::Scraper> users (C<$Web::Scraper::UserAgent>).
 
-=item $CodeRef = $tourn_info->html_filter
-
-=item $tourn_info->html_filter( sub { my $html = shift; ... } )
-
-Can be used to get or set an HTML filter.
-Defaults to an anonymous subref which just returns
-the given argument (C<sub { $_[0] }>). The callback is called with
-an HTML string. The return value is used as the filtered value.
-
-  $tourn_info->html_filter(sub { 
-      my $html = shift;
-      $html =~ s/<.*?>//g; # strip HTML tags
-      $html;
-  });
-
-=item $CodeRef = $tourn_info->date_filter
-
-=item $tourn_info->date_filter( sub { my $date = shift; ... } )
-
-Can be used to get or set a date filter.
-Defaults to an anonymous subref which just returns
-the given argument (C<sub { $_[0] }>). The callback is called with
-a date string such as C<2014-05-17T19:05Z>. The return value is used as
-the filtered value.
-
-  use Time::Piece qw/gmtime/;
-
-  $tourn_info->date_filter(sub {
-      my $date = shift; # => "2014-05-17T19:05Z"
-      gmtime->strptime( $date, '%Y-%m-%dT%H:%MZ' );
-  });
-
 =back
 
 =head2 METHODS
 
 =over 4
+
+=item $tourn_info->add_filter( 'description' => $filter )
+
+Adds a tournament description filter. C<$filter> is called with
+an HTML string. C<$filter> can be either a filter class name
+or a subref. See L<Web::Scraper::Filter> for details.
+
+  $tourn_info->add_filter(
+      'description' => sub { 
+          my $html = shift;
+          $html =~ s/<.*?>//g; # strip HTML tags
+          $html;
+      }
+  );
+
+=item $tourn_info->add_filter( 'links.rounds[].start_time' => $filter )
+
+=item $tourn_info->add_filter( 'links.rounds[].end_time' => $filter )
+
+Adds a round start/end time filter. C<$filter> is called with a date string
+such as C<2014-05-17T19:05Z>. C<$filter> can be either a filter class name
+or a subref. See L<Web::Scraper::Filter> for details.
+
+  use Time::Piece qw/gmtime/;
+
+  $tourn_info->add_filter(
+      'links.rounds[].start_time' => sub {
+          my $start_time = shift; # => "2014-05-17T19:05Z"
+          gmtime->strptime( $start_time, '%Y-%m-%dT%H:%MZ' );
+      }
+  );
 
 =item $HashRef = $tourn_info->scrape( URI->new(...) )
 

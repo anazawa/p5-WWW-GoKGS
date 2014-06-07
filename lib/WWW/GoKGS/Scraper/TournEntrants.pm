@@ -41,12 +41,6 @@ sub _build_scraper {
     };
 }
 
-sub date_filter {
-    my $self = shift;
-    $self->{date_filter} = shift if @_;
-    $self->{date_filter} ||= sub { $_[0] };
-}
-
 sub _build_filter {
     my $self = shift;
 
@@ -219,6 +213,23 @@ shared by L<Web::Scraper> users (C<$Web::Scraper::UserAgent>).
 =head2 METHODS
 
 =over 4
+
+=item $tourn_entrants->add_filter( 'links.rounds[].start_time' => $filter )
+
+=item $tourn_entrants->add_filter( 'links.rounds[].end_time' => $filter )
+
+Adds a round start/end time filter. C<$filter> is called with a date string
+such as C<2014-05-17T19:05Z>. C<$filter> can be either a filter class name
+or a subref. See L<Web::Scraper::Filter> for details.
+
+  use Time::Piece qw/gmtime/;
+
+  $tourn_entrants->add_filter(
+      'links.rounds[].start_time' => sub {
+          my $start_time = shift; # => "2014-05-17T19:05Z"
+          gmtime->strptime( $start_time, '%Y-%m-%dT%H:%MZ' );
+      }
+  );
 
 =item $HashRef = $tourn_entrants->query( id => $tourn_id, sort => 's' )
 

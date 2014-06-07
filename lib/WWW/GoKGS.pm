@@ -28,10 +28,6 @@ sub html_filter {
     $_[0]->{html_filter} ||= sub { $_[0] };
 }
 
-sub result_filter {
-    $_[0]->{result_filter} ||= sub { $_[0] };
-}
-
 sub user_agent {
     my $self = shift;
     $self->{user_agent} ||= $self->_build_user_agent;

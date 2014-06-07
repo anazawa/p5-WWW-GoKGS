@@ -61,18 +61,6 @@ sub _build_scraper {
     };
 }
 
-sub date_filter {
-    my $self = shift;
-    $self->{date_filter} = shift if @_;
-    $self->{date_filter} ||= sub { $_[0] };
-}
-
-sub result_filter {
-    my $self = shift;
-    $self->{result_filter} = shift if @_;
-    $self->{result_filter} ||= sub { $_[0] };
-}
-
 sub _build_filter {
     my $self = shift;
 
@@ -208,47 +196,31 @@ Can be used to get or set an L<LWP::UserAgent> object which is used to
 C<GET> the requested resource. Defaults to the C<LWP::UserAgent> object
 shared by L<Web::Scraper> users (C<$Web::Scraper::UserAgent>).
 
-=item $CodeRef = $tourn_games->date_filter
-
-=item $tourn_games->date_filter( sub { my $date = shift; ... } )
-
-Can be used to get or set a date filter. Defaults to an anonymous subref
-which just returns the given argument (C<sub { $_[0] }>). The callback is
-called with a date string such as C<2014-05-17T19:05Z>.
-The return value is used as the filtered value.
-
-  use Time::Piece qw/gmtime/;
-
-  $tourn_games->date_filter(sub {
-      my $date = shift; # => "2014-05-17T19:05Z"
-      gmtime->strptime( $date, '%Y-%m-%dT%H:%MZ' );
-  });
-
-=item $CodeRef = $tourn_games->result_filter
-
-=item $tourn_games->result_filter( sub { my $result = shift; ... } )
-
-Can be used to get or set a game result filter. Defaults to an anonymous subref
-which just returns the given argument (C<sub { $_[0] }>). The callback is
-called with a game result string such as C<B+Resign>.
-The return value is used as the filtered value.
-
-  $tourn_games->result_filter(sub {
-      my $result = shift;
-
-      # I prefer "B+R" to "B+Resign", 
-      # while both of them are valid SGF-compatible format
-      return 'B+R' if $result eq 'B+Resign';
-      ...
-
-      $result;
-  });
-
 =back
 
 =head2 METHODS
 
 =over 4
+
+=item $tourn_games->add_filter( 'games[].start_time' => $filter )
+
+=item $tourn_games->add_filter( 'links.rounds[].start_time' => $filter )
+
+=item $tourn_games->add_filter( 'links.rounds[].end_time' => $filter )
+
+Adds a game start time or a round start/end time filter.
+C<$filter> is called with a date string
+such as C<2014-05-17T19:05Z>. C<$filter> can be either a filter class name
+or a subref. See L<Web::Scraper::Filter> for details.
+
+  use Time::Piece qw/gmtime/;
+
+  $tourn_games->add_filter(
+      'games[].start_time' => sub {
+          my $start_time = shift; # => "2014-05-17T19:05Z"
+          gmtime->strptime( $start_time, '%Y-%m-%dT%H:%MZ' );
+      }
+  );
 
 =item $HashRef = $tourn_games->scrape( URI->new(...) )
 
