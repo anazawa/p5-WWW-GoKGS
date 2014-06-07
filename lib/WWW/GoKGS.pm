@@ -20,14 +20,6 @@ sub new {
     bless \%args, $class;
 }
 
-sub date_filter {
-    $_[0]->{date_filter} ||= sub { $_[0] };
-}
-
-sub html_filter {
-    $_[0]->{html_filter} ||= sub { $_[0] };
-}
-
 sub user_agent {
     my $self = shift;
     $self->{user_agent} ||= $self->_build_user_agent;
@@ -39,6 +31,14 @@ sub _build_user_agent {
     LWP::UserAgent->new(
         agent => ref $self . '/' . $self->VERSION,
     );
+}
+
+sub date_filter {
+    $_[0]->{date_filter} ||= sub { $_[0] };
+}
+
+sub html_filter {
+    $_[0]->{html_filter} ||= sub { $_[0] };
 }
 
 sub _scraper {
@@ -286,27 +286,6 @@ the filtered value. This attribute is read-only.
       date_filter => sub {
           my $date = shift; # => "2014-05-17T19:05Z"
           gmtime->strptime( $date, '%Y-%m-%dT%H:%MZ' );
-      }
-  );
-
-=item $CodeRef = $gokgs->result_filter
-
-Can be used to get or set a game result filter. Defaults to an anonymous subref
-which just returns the given argument (C<sub { $_[0] }>). The callback is
-called with a game result string such as C<B+Resign>.
-The return value is used as the filtered value.
-This attribute is read-only.
-
-  my $gokgs = WWW::GoKGS->new(
-      result_filter => sub {
-          my $result = shift; # => "B+Resign"
-
-          # I prefer "B+R" to "B+Resign", 
-          # while both of them are valid SGF-compatible format
-          return 'B+R' if $result eq 'B+Resign';
-          ...
-
-          $result;
       }
   );
 
