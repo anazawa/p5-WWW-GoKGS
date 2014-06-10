@@ -1,5 +1,7 @@
 Revision history for Perl extension WWW::GoKGS.
 
+  - Add ACKNOWLEDGE to document
+
 0.05 Jun 8th, 2014
 
   - Add examples/gokgs.psgi

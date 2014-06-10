@@ -14,7 +14,7 @@ my $app = sub {
     my $request = Plack::Request->new( $env );
 
     my $response = try {
-        if ( $request->method eq 'GET' or $request->method eq 'HEAD' ) {
+        if ( $request->method eq 'GET' ) {
             my $resource = $GoKGS->scrape(do {
                 my $uri = $request->uri;
                 $uri->authority( 'www.gokgs.com' );
@@ -52,7 +52,7 @@ my $app = sub {
                     'Content-Length' => length $json,
                     'Content-Type'   => 'application/json; charset=utf-8',
                 ],
-                $request->method eq 'GET' ? $json : undef
+                $json
             );
         }
         else {
