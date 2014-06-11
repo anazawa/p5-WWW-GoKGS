@@ -94,31 +94,45 @@ DESCRIPTION
               }
           );
 
-    $GameArchive = $gokgs->game_archives
-        Returns a WWW::GoKGS::Scraper::GameArchives object. This attribute
-        is read-only.
+    $GameArchives = $gokgs->game_archives
+    $gokgs->game_archives( WWW::GoKGS::Scraper::GameArchives->new(...) )
+        Can be used to get or set a scraper object which can "scrape"
+        "/gameArchives.jsp". The object must inherit from
+        WWW::GoKGS::Scraper. Defaults to a WWW::GoKGS::Scraper::GameArchives
+        object.
 
     $Top100 = $gokgs->top_100
-        Returns a WWW::GoKGS::Scraper::Top100 object. This attribute is
-        read-only.
+    $gokgs->top_100( WWW::GoKGS::Scraper::Top100->new(...) )
+        Can be used to get or set a scraper object which can "scrape"
+        "/top100.jsp". The object must inherit from WWW::GoKGS::Scraper.
+        Defaults to a WWW::GoKGS::Scraper::Top100 object.
 
     $TournList = $gokgs->tourn_list
-        Returns a WWW::GoKGS::Scraper::TournList object. This attribute is
-        read-only.
+    $gokgs->tourn_list( WWW::GoKGS::Scraper::TournList->new(...) )
+        Can be used to get or set a scraper object which can "scrape"
+        "/tournList.jsp". The object must inherit from WWW::GoKGS::Scraper.
+        Defaults to a WWW::GoKGS::Scraper::TournList object.
 
     $TournInfo = $gokgs->tourn_info
-        Returns a WWW::GoKGS::Scraper::TournInfo object. This attribute is
-        read-only.
+    $gokgs->tourn_info( WWW::GoKGS::Scraper::TournInfo->new(...) )
+        Can be used to get or set a scraper object which can "scrape"
+        "/tournInfo.jsp". The object must inherit from WWW::GoKGS::Scraper.
+        Defaults to a WWW::GoKGS::Scraper::TournInfo object.
 
     $TournEntrants = $gokgs->tourn_entrants
-        Returns a WWW::GoKGS::Scraper::TournEntrants object. This attribute
-        is read-only.
+    $gokgs->tourn_entrants( WWW::GoKGS::Scraper::TournEntrants->new(...) )
+        Can be used to get or set a scraper object which can "scrape"
+        "/tournEntrants.jsp". The object must inherit from
+        WWW::GoKGS::Scraper. Defaults to a
+        WWW::GoKGS::Scraper::TournEntrants object.
 
     $TournGames = $gokgs->tourn_games
-        Returns a WWW::GoKGS::Scraper::TournGames object. This attribute is
-        read-only.
+    $gokgs->tourn_games( WWW::GoKGS::Scraper::TournGames->new(...) )
+        Can be used to get or set a scraper object which can "scrape"
+        "/tournGames.jsp". The object must inherit from WWW::GoKGS::Scraper.
+        Defaults to a WWW::GoKGS::Scraper::TournGames object.
 
-  METHODS
+  INSTANCE METHODS
     $HashRef = $gokgs->scrape( '/gameArchives.jsp?user=foo' )
     $HashRef = $gokgs->scrape(
     'http://www.gokgs.com/gameArchives.jsp?user=foo' )
@@ -176,6 +190,48 @@ DESCRIPTION
           my $tourn_games = $gokgs->tourn_games->scrape( $uri );
 
         See WWW::GoKGS::Scraper::TournGames for details.
+
+    $scraper = $gokgs->get_scraper( $path )
+    $gokgs->set_scraper( $path => $scraper )
+    $gokgs->set_scraper( $p1 => $s1, $p2 => $s2, ... )
+
+  CLASS METHODS
+    WWW::GoKGS->mk_scraper_accessors( @paths )
+    $CodeRef = WWW::GoKGS->make_scraper_accessor( $path )
+    $accessor_name = WWW::GoKGS->scraper_accessor_name_for( $path )
+    $builder_name = WWW::GoKGS->scraper_builder_name_for( $path )
+
+SUBCLASSING
+      use parent 'WWW::GoKGS';
+      use WWW::GoKGS::Scraper::FooBar;
+
+      __PACKAGE__->mk_scraper_accessors( 'fooBar.jsp' );
+
+      sub _build_foo_bar {
+          my $self = shift;
+
+          WWW::GoKGS::Scraper::FooBar->new(
+              user_agent => $self->user_agent,
+          );
+      }
+
+WRITING SCRAPERS
+    KGS scrapers should use a namespace which starts with
+    "WWW::GoKGS::Scraper::", and also should be a subclass of
+    WWW::GoKGS::Scraper so that the users can not only use the module
+    solely, but also can add the scraper object to "WWW::GoKGS" object as
+    follows:
+
+      # your scraper
+      use WWW::GoKGS::Scraper::FooBar;
+
+      # using set_scraper()
+      $gokgs->set_scraper( '/fooBar.jsp' => WWW::GoKGS::Scraper::FooBar->new );
+
+      # by subclassing
+      use parent 'WWW::GoKGS';
+      __PACKAGE__->mk_scraper_accessors( '/fooBar.jsp' );
+      sub _build_foo_bar { WWW::GoKGS::Scraper::FooBar->new }
 
 ACKNOWLEDGEMENT
     Thanks to wms, the author of KGS Go Server, we can enjoy playing go
