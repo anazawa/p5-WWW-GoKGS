@@ -16,7 +16,30 @@ use WWW::GoKGS::Scraper::TournList;
 
 our $VERSION = '0.06';
 
-sub get_accessor_name {
+__PACKAGE__->mk_scraper_accessors(
+    '/gameArchives.jsp',
+    '/top100.jsp',
+    '/tournList.jsp',
+    '/tournInfo.jsp',
+    '/tournEntrants.jsp',
+    '/tournGames.jsp',
+);
+
+sub mk_scraper_accessors {
+    my ( $class, @paths ) = @_;
+
+    for my $path ( @paths ) {
+        my $method = "$class\::" . $class->scraper_accessor_name_for( $path );
+        my $body = $class->make_scraper_accessor( $path );
+
+        no strict 'refs';
+        *$method = $body;
+    }
+
+    return;
+}
+
+sub scraper_accessor_name_for {
     my ( $class, $path ) = @_;
     my $name = $path;
     $name =~ s{^/}{};
@@ -25,11 +48,21 @@ sub get_accessor_name {
     $name;
 }
 
-sub get_builder_name {
+sub scraper_builder_name_for {
     my ( $class, $path ) = @_;
-    my $name = $class->get_accessor_name( $path );
+    my $name = $class->scraper_accessor_name_for( $path );
     $name = "_build_$name";
     $name;
+}
+
+sub make_scraper_accessor {
+    my ( $class, $path ) = @_;
+
+    sub {
+        my $self = shift;
+        return $self->get_scraper( $path ) unless @_;
+        $self->set_scraper( $path => shift );
+    };
 }
 
 sub new {
@@ -68,7 +101,7 @@ sub get_scraper {
     my $scraper = $self->_scraper;
 
     unless ( exists $scraper->{$path} ) {
-        my $builder = $self->get_builder_name( $path );
+        my $builder = $self->scraper_builder_name_for( $path );
            $builder = $self->can( $builder ) || sub {};
 
         if ( my $built = $self->$builder ) {
@@ -83,38 +116,21 @@ sub get_scraper {
 }
 
 sub set_scraper {
-    my ( $self, $path, $scraper ) = @_;
+    my ( $self, @pairs ) = @_;
+    my $scraper = $self->_scraper;
 
-    if ( blessed $scraper and $scraper->isa('WWW::GoKGS::Scraper') ) {
-        $self->_scraper->{$path} = $scraper;
-    }
-    else {
-        croak "'$scraper' must be a subclass of WWW::GoKGS::Scraper";
+    croak "Odd number of arguments passed to 'set_scraper'" if @pairs % 2;
+
+    while ( my ($key, $value) = splice @pairs, 0, 2 ) {
+        if ( blessed $value and $value->isa('WWW::GoKGS::Scraper') ) {
+            $scraper->{$key} = $value;
+        }
+        else {
+            croak "$value ($key) must be a subclass of WWW::GoKGS::Scraper";
+        }
     }
 
     return;
-}
-
-BEGIN {
-    for my $path (
-        '/gameArchives.jsp',
-        '/top100.jsp',
-        '/tournList.jsp',
-        '/tournInfo.jsp',
-        '/tournEntrants.jsp',
-        '/tournGames.jsp',
-    ) {
-        my $method = __PACKAGE__->get_accessor_name( $path );
-
-        my $body = sub {
-            my $self = shift;
-            return $self->get_scraper( $path ) unless @_;
-            $self->set_scraper( $path => shift );
-        };
-
-        no strict 'refs';
-        *$method = $body;
-    }
 }
 
 sub _build_game_archives {
