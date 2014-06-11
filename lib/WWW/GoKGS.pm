@@ -348,7 +348,7 @@ the filtered value. This attribute is read-only.
 =item $gokgs->game_archives( WWW::GoKGS::Scraper::GameArchives->new(...) )
 
 Can be used to get or set a scraper object which can C<scrape>
-C</gameArchives.jsp>. The object must inherit from L<WWW::GoKGS::Scraper>.
+C</gameArchives.jsp>. The scraper class must inherit from L<WWW::GoKGS::Scraper>.
 Defaults to a L<WWW::GoKGS::Scraper::GameArchives> object.
 
 =item $Top100 = $gokgs->top_100
@@ -356,7 +356,7 @@ Defaults to a L<WWW::GoKGS::Scraper::GameArchives> object.
 =item $gokgs->top_100( WWW::GoKGS::Scraper::Top100->new(...) )
 
 Can be used to get or set a scraper object which can C<scrape>
-C</top100.jsp>. The object must inherit from L<WWW::GoKGS::Scraper>.
+C</top100.jsp>. The scraper class must inherit from L<WWW::GoKGS::Scraper>.
 Defaults to a L<WWW::GoKGS::Scraper::Top100> object.
 
 =item $TournList = $gokgs->tourn_list
@@ -364,7 +364,7 @@ Defaults to a L<WWW::GoKGS::Scraper::Top100> object.
 =item $gokgs->tourn_list( WWW::GoKGS::Scraper::TournList->new(...) )
 
 Can be used to get or set a scraper object which can C<scrape>
-C</tournList.jsp>. The object must inherit from L<WWW::GoKGS::Scraper>.
+C</tournList.jsp>. The scraper class must inherit from L<WWW::GoKGS::Scraper>.
 Defaults to a L<WWW::GoKGS::Scraper::TournList> object.
 
 =item $TournInfo = $gokgs->tourn_info
@@ -372,7 +372,7 @@ Defaults to a L<WWW::GoKGS::Scraper::TournList> object.
 =item $gokgs->tourn_info( WWW::GoKGS::Scraper::TournInfo->new(...) )
 
 Can be used to get or set a scraper object which can C<scrape>
-C</tournInfo.jsp>. The object must inherit from L<WWW::GoKGS::Scraper>.
+C</tournInfo.jsp>. The scraper class must inherit from L<WWW::GoKGS::Scraper>.
 Defaults to a L<WWW::GoKGS::Scraper::TournInfo> object.
 
 =item $TournEntrants = $gokgs->tourn_entrants
@@ -380,7 +380,7 @@ Defaults to a L<WWW::GoKGS::Scraper::TournInfo> object.
 =item $gokgs->tourn_entrants( WWW::GoKGS::Scraper::TournEntrants->new(...) )
 
 Can be used to get or set a scraper object which can C<scrape>
-C</tournEntrants.jsp>. The object must inherit from L<WWW::GoKGS::Scraper>.
+C</tournEntrants.jsp>. The scraper class must inherit from L<WWW::GoKGS::Scraper>.
 Defaults to a L<WWW::GoKGS::Scraper::TournEntrants> object.
 
 =item $TournGames = $gokgs->tourn_games
@@ -388,7 +388,7 @@ Defaults to a L<WWW::GoKGS::Scraper::TournEntrants> object.
 =item $gokgs->tourn_games( WWW::GoKGS::Scraper::TournGames->new(...) )
 
 Can be used to get or set a scraper object which can C<scrape>
-C</tournGames.jsp>. The object must inherit from L<WWW::GoKGS::Scraper>.
+C</tournGames.jsp>. The scraper class must inherit from L<WWW::GoKGS::Scraper>.
 Defaults to a L<WWW::GoKGS::Scraper::TournGames> object.
 
 =back
@@ -465,9 +465,26 @@ See L<WWW::GoKGS::Scraper::TournGames> for details.
 
 =item $scraper = $gokgs->get_scraper( $path )
 
+Returns a scraper object which can C<scrape> a resource located at C<$path>
+on KGS. If the scraper object does not exist, then C<undef> is returned.
+
+  my $game_archives = $gokgs->get_scraper( '/gameArchives.jsp' );
+  # => WWW::GoKGS::Scraper::GameArchives object
+
 =item $gokgs->set_scraper( $path => $scraper )
 
 =item $gokgs->set_scraper( $p1 => $s1, $p2 => $s2, ... )
+
+Can be used to set a scraper object which can C<scrape>
+a resource located at C<$path> on KGS. The scraper class must be a subclass
+of L<WWW::GoKGS::Scraper>. You can also set multiple scrapers
+in one C<set_scraper> call.
+
+  use WWW::GoKGS::Scraper::FooBar;
+
+  $gokgs->set_scraper(
+      '/fooBar.jsp' => WWW::GoKGS::Scraper::FooBar->new
+  );
 
 =back
 
@@ -475,13 +492,42 @@ See L<WWW::GoKGS::Scraper::TournGames> for details.
 
 =over 4
 
-=item WWW::GoKGS->mk_scraper_accessors( @paths )
+=item $class->mk_scraper_accessors( $path )
 
-=item $CodeRef = WWW::GoKGS->make_scraper_accessor( $path )
+=item $class->mk_scraper_accessors( @paths )
 
-=item $accessor_name = WWW::GoKGS->scraper_accessor_name_for( $path )
+Creates the accessor method for a scraper which can C<scrape> C<$path>.
+You can also create multiple accessors in one C<mk_scraper_accessors> call.
 
-=item $builder_name = WWW::GoKGS->scraper_builder_name_for( $path )
+  use parent 'WWW::GoKGS';
+
+  # Generates foo_bar() whose builder is _build_foo_bar()
+  __PACKAGE__->mk_scraper_accessors( '/fooBar.jsp' );
+
+  # Build a scraper object which can scrape /fooBar.jsp
+  sub _build_foo_bar {
+      my $self = shift;
+      ...
+  }
+
+=item $CodeRef = $class->make_scraper_accessor( $path )
+
+Returns a subroutine reference which acts as an accessor for the scraper
+which can C<scrape> C<$path>.
+
+=item $accessor_name = $class->scraper_accessor_name_for( $path )
+
+Returns the accessor name of a scraper which can C<scrape> C<$path>.
+
+  my $accessor_name = $class->scraper_accessor_name_for( '/fooBar.jsp' );
+  # => "foo_bar"
+
+=item $builder_name = $class->scraper_builder_name_for( $path )
+
+Returns the builder name of a scraper which can C<scrape> C<$path>.
+
+  my $builder_name = $class->scraper_builder_name_for( '/fooBar.jsp' );
+  # => "_build_foo_bar"
 
 =back
 
@@ -507,11 +553,12 @@ C<WWW::GoKGS::Scraper::>, and also should be a subclass of
 L<WWW::GoKGS::Scraper> so that the users can not only use the module solely,
 but also can add the scraper object to C<WWW::GoKGS> object as follows:
 
-  # your scraper
-  use WWW::GoKGS::Scraper::FooBar;
+  use WWW::GoKGS::Scraper::FooBar; # your scraper
 
   # using set_scraper()
-  $gokgs->set_scraper( '/fooBar.jsp' => WWW::GoKGS::Scraper::FooBar->new );
+  $gokgs->set_scraper(
+      '/fooBar.jsp' => WWW::GoKGS::Scraper::FooBar->new
+  );
 
   # by subclassing
   use parent 'WWW::GoKGS';
