@@ -4,6 +4,8 @@ use strict;
 use warnings;
 use Carp qw/croak/;
 use LWP::UserAgent;
+use Scalar::Util qw/blessed/;
+use String::CamelCase qw/decamelize/;
 use URI;
 use WWW::GoKGS::Scraper::GameArchives;
 use WWW::GoKGS::Scraper::Top100;
@@ -41,9 +43,41 @@ sub html_filter {
     $_[0]->{html_filter} ||= sub { $_[0] };
 }
 
+sub _scraper {
+    $_[0]->{scraper} ||= {};
+}
+
+sub get_scraper {
+    my ( $self, $path ) = @_;
+    my $scraper = $self->_scraper;
+
+    unless ( exists $scraper->{$path} ) {
+        my $build = $path;
+           $build =~ s{^/}{};
+           $build =~ s{\.jsp$}{};
+           $build = $build eq 'top100' ? 'top_100' : decamelize $build;
+           $build = $self->can( "_build_$build" ) || sub {};
+
+        $scraper->{$path} = do {
+            my $built = $self->$build;
+
+            if ( !defined $built ) {
+                undef;
+            }
+            elsif ( blessed $built and $built->isa('WWW::GoKGS::Scraper') ) {
+                $built;
+            }
+            else {
+                croak "'$built' must be a subclass of WWW::GoKGS::Scraper";
+            }
+        };
+    }
+
+    $scraper->{$path};
+}
+
 sub game_archives {
-    my $self = shift;
-    $self->{game_archives} ||= $self->_build_game_archives;
+    $_[0]->get_scraper('/gameArchives.jsp');
 }
 
 sub _build_game_archives {
@@ -61,8 +95,7 @@ sub _build_game_archives {
 }
 
 sub top_100 {
-    my $self = shift;
-    $self->{top_100} ||= $self->_build_top_100;
+    $_[0]->get_scraper('/top100.jsp');
 }
 
 sub _build_top_100 {
@@ -74,8 +107,7 @@ sub _build_top_100 {
 }
 
 sub tourn_list {
-    my $self = shift;
-    $self->{tourn_list} ||= $self->_build_tourn_list;
+    $_[0]->get_scraper('/tournList.jsp');
 }
 
 sub _build_tourn_list {
@@ -87,8 +119,7 @@ sub _build_tourn_list {
 }
 
 sub tourn_info {
-    my $self = shift;
-    $self->{tourn_info} ||= $self->_build_tourn_info;
+    $_[0]->get_scraper('/tournInfo.jsp');
 }
 
 sub _build_tourn_info {
@@ -108,8 +139,7 @@ sub _build_tourn_info {
 }
 
 sub tourn_entrants {
-    my $self = shift;
-    $self->{tourn_entrants} ||= $self->_build_tourn_entrants;
+    $_[0]->get_scraper('/tournEntrants.jsp');
 }
 
 sub _build_tourn_entrants {
@@ -128,8 +158,7 @@ sub _build_tourn_entrants {
 }
 
 sub tourn_games {
-    my $self = shift;
-    $self->{tourn_games} ||= $self->_build_tourn_games;
+    $_[0]->get_scraper('/tournGames.jsp');
 }
 
 sub _build_tourn_games {
@@ -148,38 +177,20 @@ sub _build_tourn_games {
     $tourn_games;
 }
 
-sub _scraper {
-    my $self = shift;
-    $self->{scraper} ||= $self->_build_scraper;
-}
-
-sub _build_scraper {
-    my $self = shift;
-
-    +{ map { $_->base_uri->path => $_ } (
-        $self->game_archives,
-        $self->top_100,
-        $self->tourn_list,
-        $self->tourn_info,
-        $self->tourn_entrants,
-        $self->tourn_games,
-    )};
-}
-
 sub scrape {
     my $self = shift;
     my $stuff = defined $_[0] ? shift : q{};
 
-    my $url = URI->new( $stuff );
-       $url->authority( 'www.gokgs.com' ) unless $url->authority;
-       $url->scheme( 'http' ) unless $url->scheme;
+    my $uri = URI->new( $stuff );
+       $uri->authority( 'www.gokgs.com' ) unless $uri->authority;
+       $uri->scheme( 'http' ) unless $uri->scheme;
 
-    my $scraper = $url =~ m{^https?://www\.gokgs\.com/} && $url->path;
-       $scraper = $self->_scraper->{$scraper} if $scraper;
+    my $scraper = $uri =~ m{^https?://www\.gokgs\.com/} && $uri->path;
+       $scraper = $self->get_scraper( $scraper ) if $scraper;
 
     croak "Don't know how to scrape '$stuff'" unless $scraper;
 
-    $scraper->scrape( $url );
+    $scraper->scrape( $uri );
 }
 
 1;
@@ -402,6 +413,23 @@ A shortcut for:
 See L<WWW::GoKGS::Scraper::TournGames> for details.
 
 =back
+
+=head2 SUBCLASSING
+
+  use parent 'WWW::GoKGS';
+  use WWW::GoKGS::Scraper::FooBar;
+
+  sub foo_bar {
+      $_[0]->get_scraper('/fooBar.jsp');
+  }
+
+  sub _build_foo_bar {
+      my $self = shift;
+
+      WWW::GoKGS::Scraper::FooBar->new(
+          user_agent => $self->user_agent,
+      );
+  }
 
 =head1 ACKNOWLEDGEMENT
 
