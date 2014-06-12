@@ -14,7 +14,7 @@ use WWW::GoKGS::Scraper::TournGames;
 use WWW::GoKGS::Scraper::TournInfo;
 use WWW::GoKGS::Scraper::TournList;
 
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 
 __PACKAGE__->mk_accessors(
     '/gameArchives.jsp',
