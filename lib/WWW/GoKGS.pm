@@ -56,12 +56,31 @@ sub builder_name_for {
 
 sub make_accessor {
     my ( $class, $path ) = @_;
+    my $builder = $class->builder_name_for( $path );
 
-    sub {
-        my $self = shift;
-        return $self->get_scraper( $path ) unless @_;
-        $self->set_scraper( $path => shift );
-    };
+    if ( $class->can($builder) ) {
+        sub {
+            my $self = shift;
+
+            if ( @_ ) {
+                $self->set_scraper( $path => shift );
+            }
+            elsif ( $self->_has_scraper($path) ) {
+                $self->get_scraper( $path );
+            }
+            else {
+                $self->set_scraper( $path => $self->$builder );
+                $self->get_scraper( $path );
+            }
+        };
+    }
+    else {
+        sub {
+            my $self = shift;
+            return $self->get_scraper( $path ) unless @_;
+            $self->set_scraper( $path => shift );
+        };
+    }
 }
 
 sub new {
@@ -97,21 +116,12 @@ sub _scraper {
 
 sub get_scraper {
     my ( $self, $path ) = @_;
-    my $scraper = $self->_scraper;
+    $self->_scraper->{$path};
+}
 
-    unless ( exists $scraper->{$path} ) {
-        my $builder = $self->builder_name_for( $path );
-           $builder = $self->can( $builder ) || sub {};
-
-        if ( my $built = $self->$builder ) {
-            $self->set_scraper( $path => $built );
-        }
-        else {
-            $scraper->{$path} = undef;
-        }
-    }
-
-    $scraper->{$path};
+sub _has_scraper {
+    my ( $self, $path ) = @_;
+    exists $self->_scraper->{$path};
 }
 
 sub set_scraper {
@@ -217,8 +227,20 @@ sub scrape {
        $uri->authority( 'www.gokgs.com' ) unless $uri->authority;
        $uri->scheme( 'http' ) unless $uri->scheme;
 
-    my $scraper = $uri =~ m{^https?://www\.gokgs\.com/} && $uri->path;
-       $scraper = $self->get_scraper( $scraper ) if $scraper;
+    my $scraper = do {
+        my $path = $uri =~ m{^https?://www\.gokgs\.com/} && $uri->path;
+        my $accessor = $path && $self->accessor_name_for( $path );
+
+        if ( $accessor and $self->can($accessor) ) {
+            $self->$accessor;
+        }
+        elsif ( $path ) {
+            $self->get_scraper( $path );
+        }
+        else {
+            undef;
+        }
+    };
 
     croak "Don't know how to scrape '$stuff'" unless $scraper;
 
@@ -347,16 +369,15 @@ the filtered value. This attribute is read-only.
 =item $gokgs->game_archives( WWW::GoKGS::Scraper::GameArchives->new(...) )
 
 Can be used to get or set a scraper object which can C<scrape>
-C</gameArchives.jsp>. The scraper class must inherit from L<WWW::GoKGS::Scraper>.
-Defaults to a L<WWW::GoKGS::Scraper::GameArchives> object.
+C</gameArchives.jsp>. Defaults to a L<WWW::GoKGS::Scraper::GameArchives>
+object.
 
 =item $Top100 = $gokgs->top_100
 
 =item $gokgs->top_100( WWW::GoKGS::Scraper::Top100->new(...) )
 
 Can be used to get or set a scraper object which can C<scrape>
-C</top100.jsp>. The scraper class must inherit from L<WWW::GoKGS::Scraper>.
-Defaults to a L<WWW::GoKGS::Scraper::Top100> object.
+C</top100.jsp>. Defaults to a L<WWW::GoKGS::Scraper::Top100> object.
 
 =item $TournList = $gokgs->tourn_list
 
@@ -481,7 +502,8 @@ call.
   $gokgs->set_scraper(
       '/fooBar.jsp' => WWW::GoKGS::Scraper::FooBar->new,
       '/barBaz.jsp' => scraper {
-           process ...;
+           process '.bar', baz => 'TEXT;
+           ...
       }
   );
 

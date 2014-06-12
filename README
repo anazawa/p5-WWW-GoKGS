@@ -97,16 +97,13 @@ DESCRIPTION
     $GameArchives = $gokgs->game_archives
     $gokgs->game_archives( WWW::GoKGS::Scraper::GameArchives->new(...) )
         Can be used to get or set a scraper object which can "scrape"
-        "/gameArchives.jsp". The scraper class must inherit from
-        WWW::GoKGS::Scraper. Defaults to a WWW::GoKGS::Scraper::GameArchives
+        "/gameArchives.jsp". Defaults to a WWW::GoKGS::Scraper::GameArchives
         object.
 
     $Top100 = $gokgs->top_100
     $gokgs->top_100( WWW::GoKGS::Scraper::Top100->new(...) )
         Can be used to get or set a scraper object which can "scrape"
-        "/top100.jsp". The scraper class must inherit from
-        WWW::GoKGS::Scraper. Defaults to a WWW::GoKGS::Scraper::Top100
-        object.
+        "/top100.jsp". Defaults to a WWW::GoKGS::Scraper::Top100 object.
 
     $TournList = $gokgs->tourn_list
     $gokgs->tourn_list( WWW::GoKGS::Scraper::TournList->new(...) )
@@ -211,7 +208,8 @@ DESCRIPTION
           $gokgs->set_scraper(
               '/fooBar.jsp' => WWW::GoKGS::Scraper::FooBar->new,
               '/barBaz.jsp' => scraper {
-                   process ...;
+                   process '.bar', baz => 'TEXT;
+                   ...
               }
           );
 
