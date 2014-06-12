@@ -16,7 +16,7 @@ use WWW::GoKGS::Scraper::TournList;
 
 our $VERSION = '0.06';
 
-__PACKAGE__->mk_scraper_accessors(
+__PACKAGE__->mk_accessors(
     '/gameArchives.jsp',
     '/top100.jsp',
     '/tournList.jsp',
@@ -25,13 +25,12 @@ __PACKAGE__->mk_scraper_accessors(
     '/tournGames.jsp',
 );
 
-sub mk_scraper_accessors {
+sub mk_accessors {
     my ( $class, @paths ) = @_;
 
     for my $path ( @paths ) {
-        my $method = "$class\::" . $class->scraper_accessor_name_for( $path );
-        my $body = $class->make_scraper_accessor( $path );
-
+        my $method = join '::', $class, $class->accessor_name_for( $path );
+        my $body = $class->make_accessor( $path );
         no strict 'refs';
         *$method = $body;
     }
@@ -39,7 +38,7 @@ sub mk_scraper_accessors {
     return;
 }
 
-sub scraper_accessor_name_for {
+sub accessor_name_for {
     my ( $class, $path ) = @_;
     my $name = $path;
     $name =~ s{^/}{};
@@ -48,14 +47,14 @@ sub scraper_accessor_name_for {
     $name;
 }
 
-sub scraper_builder_name_for {
+sub builder_name_for {
     my ( $class, $path ) = @_;
-    my $name = $class->scraper_accessor_name_for( $path );
+    my $name = $class->accessor_name_for( $path );
     $name = "_build_$name";
     $name;
 }
 
-sub make_scraper_accessor {
+sub make_accessor {
     my ( $class, $path ) = @_;
 
     sub {
@@ -101,7 +100,7 @@ sub get_scraper {
     my $scraper = $self->_scraper;
 
     unless ( exists $scraper->{$path} ) {
-        my $builder = $self->scraper_builder_name_for( $path );
+        my $builder = $self->builder_name_for( $path );
            $builder = $self->can( $builder ) || sub {};
 
         if ( my $built = $self->$builder ) {
@@ -126,7 +125,7 @@ sub set_scraper {
             $scraper->{$key} = $value;
         }
         else {
-            croak "$value ($key) must be a subclass of WWW::GoKGS::Scraper";
+            croak "$value ($key scraper) is not a WWW::GoKGS::Scraper";
         }
     }
 
@@ -492,17 +491,17 @@ in one C<set_scraper> call.
 
 =over 4
 
-=item $class->mk_scraper_accessors( $path )
+=item $class->mk_accessors( $path )
 
-=item $class->mk_scraper_accessors( @paths )
+=item $class->mk_accessors( @paths )
 
 Creates the accessor method for a scraper which can C<scrape> C<$path>.
-You can also create multiple accessors in one C<mk_scraper_accessors> call.
+You can also create multiple accessors in one C<mk_accessors> call.
 
   use parent 'WWW::GoKGS';
 
   # Generates foo_bar() whose builder is _build_foo_bar()
-  __PACKAGE__->mk_scraper_accessors( '/fooBar.jsp' );
+  __PACKAGE__->mk_accessors( '/fooBar.jsp' );
 
   # Build a scraper object which can scrape /fooBar.jsp
   sub _build_foo_bar {
@@ -510,41 +509,26 @@ You can also create multiple accessors in one C<mk_scraper_accessors> call.
       ...
   }
 
-=item $CodeRef = $class->make_scraper_accessor( $path )
+=item $CodeRef = $class->make_accessor( $path )
 
 Returns a subroutine reference which acts as an accessor for the scraper
 which can C<scrape> C<$path>.
 
-=item $accessor_name = $class->scraper_accessor_name_for( $path )
+=item $accessor_name = $class->accessor_name_for( $path )
 
 Returns the accessor name of a scraper which can C<scrape> C<$path>.
 
-  my $accessor_name = $class->scraper_accessor_name_for( '/fooBar.jsp' );
+  my $accessor_name = $class->accessor_name_for( '/fooBar.jsp' );
   # => "foo_bar"
 
-=item $builder_name = $class->scraper_builder_name_for( $path )
+=item $builder_name = $class->builder_name_for( $path )
 
 Returns the builder name of a scraper which can C<scrape> C<$path>.
 
-  my $builder_name = $class->scraper_builder_name_for( '/fooBar.jsp' );
+  my $builder_name = $class->builder_name_for( '/fooBar.jsp' );
   # => "_build_foo_bar"
 
 =back
-
-=head1 SUBCLASSING
-
-  use parent 'WWW::GoKGS';
-  use WWW::GoKGS::Scraper::FooBar;
-
-  __PACKAGE__->mk_scraper_accessors( 'fooBar.jsp' );
-
-  sub _build_foo_bar {
-      my $self = shift;
-
-      WWW::GoKGS::Scraper::FooBar->new(
-          user_agent => $self->user_agent,
-      );
-  }
 
 =head1 WRITING SCRAPERS
 
@@ -562,7 +546,7 @@ but also can add the scraper object to C<WWW::GoKGS> object as follows:
 
   # by subclassing
   use parent 'WWW::GoKGS';
-  __PACKAGE__->mk_scraper_accessors( '/fooBar.jsp' );
+  __PACKAGE__->mk_accessors( '/fooBar.jsp' );
   sub _build_foo_bar { WWW::GoKGS::Scraper::FooBar->new }
 
 =head1 ACKNOWLEDGEMENT

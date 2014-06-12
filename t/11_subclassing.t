@@ -12,7 +12,7 @@ sub scrape {
 package My::WWW::GoKGS;
 use parent qw/WWW::GoKGS/;
 
-__PACKAGE__->mk_scraper_accessors( '/fooBar.jsp' );
+__PACKAGE__->mk_accessors( '/fooBar.jsp' );
 
 sub _build_foo_bar {
     WWW::GoKGS::Scraper::FooBar->new;
