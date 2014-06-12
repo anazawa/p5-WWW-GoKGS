@@ -220,10 +220,9 @@ sub _build_tourn_games {
 }
 
 sub scrape {
-    my $self = shift;
-    my $stuff = defined $_[0] ? shift : q{};
+    my ( $self, $arg ) = @_;
 
-    my $uri = URI->new( $stuff );
+    my $uri = URI->new( $arg );
        $uri->authority( 'www.gokgs.com' ) unless $uri->authority;
        $uri->scheme( 'http' ) unless $uri->scheme;
 
@@ -242,7 +241,7 @@ sub scrape {
         }
     };
 
-    croak "Don't know how to scrape '$stuff'" unless $scraper;
+    croak "Don't know how to scrape '$arg'" unless $scraper;
 
     $scraper->scrape( $uri );
 }
