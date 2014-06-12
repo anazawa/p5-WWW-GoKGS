@@ -111,29 +111,25 @@ DESCRIPTION
     $TournList = $gokgs->tourn_list
     $gokgs->tourn_list( WWW::GoKGS::Scraper::TournList->new(...) )
         Can be used to get or set a scraper object which can "scrape"
-        "/tournList.jsp". The scraper class must inherit from
-        WWW::GoKGS::Scraper. Defaults to a WWW::GoKGS::Scraper::TournList
+        "/tournList.jsp". Defaults to a WWW::GoKGS::Scraper::TournList
         object.
 
     $TournInfo = $gokgs->tourn_info
     $gokgs->tourn_info( WWW::GoKGS::Scraper::TournInfo->new(...) )
         Can be used to get or set a scraper object which can "scrape"
-        "/tournInfo.jsp". The scraper class must inherit from
-        WWW::GoKGS::Scraper. Defaults to a WWW::GoKGS::Scraper::TournInfo
+        "/tournInfo.jsp". Defaults to a WWW::GoKGS::Scraper::TournInfo
         object.
 
     $TournEntrants = $gokgs->tourn_entrants
     $gokgs->tourn_entrants( WWW::GoKGS::Scraper::TournEntrants->new(...) )
         Can be used to get or set a scraper object which can "scrape"
-        "/tournEntrants.jsp". The scraper class must inherit from
-        WWW::GoKGS::Scraper. Defaults to a
+        "/tournEntrants.jsp". Defaults to a
         WWW::GoKGS::Scraper::TournEntrants object.
 
     $TournGames = $gokgs->tourn_games
     $gokgs->tourn_games( WWW::GoKGS::Scraper::TournGames->new(...) )
         Can be used to get or set a scraper object which can "scrape"
-        "/tournGames.jsp". The scraper class must inherit from
-        WWW::GoKGS::Scraper. Defaults to a WWW::GoKGS::Scraper::TournGames
+        "/tournGames.jsp". Defaults to a WWW::GoKGS::Scraper::TournGames
         object.
 
   INSTANCE METHODS
@@ -206,14 +202,17 @@ DESCRIPTION
     $gokgs->set_scraper( $path => $scraper )
     $gokgs->set_scraper( $p1 => $s1, $p2 => $s2, ... )
         Can be used to set a scraper object which can "scrape" a resource
-        located at $path on KGS. The scraper class must be a subclass of
-        WWW::GoKGS::Scraper. You can also set multiple scrapers in one
+        located at $path on KGS. You can also set multiple scrapers in one
         "set_scraper" call.
 
-          use WWW::GoKGS::Scraper::FooBar;
+          use Web::Scraper;
+          use WWW::GoKGS::Scraper::FooBar; # isa WWW::GoKGS::Scraper
 
           $gokgs->set_scraper(
-              '/fooBar.jsp' => WWW::GoKGS::Scraper::FooBar->new
+              '/fooBar.jsp' => WWW::GoKGS::Scraper::FooBar->new,
+              '/barBaz.jsp' => scraper {
+                   process ...;
+              }
           );
 
   CLASS METHODS

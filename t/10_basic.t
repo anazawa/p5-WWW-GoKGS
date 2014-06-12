@@ -99,7 +99,7 @@ subtest 'WWW::GoKGS' => sub {
 
     throws_ok {
         $gokgs->set_scraper( '/fooBar.jsp' => 'FooBar' );
-    } qr{^FooBar \(/fooBar\.jsp scraper\) is not a WWW::GoKGS::Scraper};
+    } qr{^FooBar \(/fooBar\.jsp scraper\) is missing 'scrape' method};
 
     throws_ok {
         $gokgs->scrape( '/fooBar.jsp' );

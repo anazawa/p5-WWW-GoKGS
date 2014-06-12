@@ -121,11 +121,11 @@ sub set_scraper {
     croak "Odd number of arguments passed to 'set_scraper'" if @pairs % 2;
 
     while ( my ($key, $value) = splice @pairs, 0, 2 ) {
-        if ( blessed $value and $value->isa('WWW::GoKGS::Scraper') ) {
+        if ( blessed $value and $value->can('scrape') ) {
             $scraper->{$key} = $value;
         }
         else {
-            croak "$value ($key scraper) is not a WWW::GoKGS::Scraper";
+            croak "$value ($key scraper) is missing 'scrape' method";
         }
     }
 
@@ -363,32 +363,29 @@ Defaults to a L<WWW::GoKGS::Scraper::Top100> object.
 =item $gokgs->tourn_list( WWW::GoKGS::Scraper::TournList->new(...) )
 
 Can be used to get or set a scraper object which can C<scrape>
-C</tournList.jsp>. The scraper class must inherit from L<WWW::GoKGS::Scraper>.
-Defaults to a L<WWW::GoKGS::Scraper::TournList> object.
+C</tournList.jsp>. Defaults to a L<WWW::GoKGS::Scraper::TournList> object.
 
 =item $TournInfo = $gokgs->tourn_info
 
 =item $gokgs->tourn_info( WWW::GoKGS::Scraper::TournInfo->new(...) )
 
 Can be used to get or set a scraper object which can C<scrape>
-C</tournInfo.jsp>. The scraper class must inherit from L<WWW::GoKGS::Scraper>.
-Defaults to a L<WWW::GoKGS::Scraper::TournInfo> object.
+C</tournInfo.jsp>. Defaults to a L<WWW::GoKGS::Scraper::TournInfo> object.
 
 =item $TournEntrants = $gokgs->tourn_entrants
 
 =item $gokgs->tourn_entrants( WWW::GoKGS::Scraper::TournEntrants->new(...) )
 
 Can be used to get or set a scraper object which can C<scrape>
-C</tournEntrants.jsp>. The scraper class must inherit from L<WWW::GoKGS::Scraper>.
-Defaults to a L<WWW::GoKGS::Scraper::TournEntrants> object.
+C</tournEntrants.jsp>. Defaults to a L<WWW::GoKGS::Scraper::TournEntrants>
+object.
 
 =item $TournGames = $gokgs->tourn_games
 
 =item $gokgs->tourn_games( WWW::GoKGS::Scraper::TournGames->new(...) )
 
 Can be used to get or set a scraper object which can C<scrape>
-C</tournGames.jsp>. The scraper class must inherit from L<WWW::GoKGS::Scraper>.
-Defaults to a L<WWW::GoKGS::Scraper::TournGames> object.
+C</tournGames.jsp>. Defaults to a L<WWW::GoKGS::Scraper::TournGames> object.
 
 =back
 
@@ -474,15 +471,18 @@ on KGS. If the scraper object does not exist, then C<undef> is returned.
 
 =item $gokgs->set_scraper( $p1 => $s1, $p2 => $s2, ... )
 
-Can be used to set a scraper object which can C<scrape>
-a resource located at C<$path> on KGS. The scraper class must be a subclass
-of L<WWW::GoKGS::Scraper>. You can also set multiple scrapers
-in one C<set_scraper> call.
+Can be used to set a scraper object which can C<scrape> a resource located
+at C<$path> on KGS. You can also set multiple scrapers in one C<set_scraper>
+call.
 
-  use WWW::GoKGS::Scraper::FooBar;
+  use Web::Scraper;
+  use WWW::GoKGS::Scraper::FooBar; # isa WWW::GoKGS::Scraper
 
   $gokgs->set_scraper(
-      '/fooBar.jsp' => WWW::GoKGS::Scraper::FooBar->new
+      '/fooBar.jsp' => WWW::GoKGS::Scraper::FooBar->new,
+      '/barBaz.jsp' => scraper {
+           process ...;
+      }
   );
 
 =back
