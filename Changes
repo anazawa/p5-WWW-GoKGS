@@ -1,5 +1,11 @@
 Revision history for Perl extension WWW::GoKGS.
 
+  - Switch to Module::Build
+  - Add author tests
+  - Tests require Time::Piece
+  - Remove t/20_static.t since dynamic tests are run by Travis CI:
+      https://travis-ci.org/anazawa/p5-WWW-GoKGS
+
 0.08 Jun 13th, 2014
 
   [BUGFIX]

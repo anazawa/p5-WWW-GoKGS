@@ -22,7 +22,6 @@ my $build = Module::Build->new(
         'Test::More' => '0.98',
         'Test::Exception' => 0,
         'Test::Pod' => '1.45',
-        'Path::Class' => 0,
         'Time::Piece' => 0,
     },
     test_files => [ 't/', 'xt/' ],
