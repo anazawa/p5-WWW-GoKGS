@@ -9,31 +9,47 @@ plan skip_all => 'AUTHOR_TESTING is required' unless $ENV{AUTHOR_TESTING};
 my $game_archives = WWW::GoKGS::Scraper::GameArchives->new;
 
 my $got = $game_archives->query(
-    user  => 'anazawa',
-    year  => '2014',
-    month => '5',
-    oldAccounts => 'y',
+    user => 'anazawa',
 );
 
-my %user = (
+my $user = hash(
     name => sub { /^[a-zA-Z][a-zA-Z0-9]{0,9}$/ },
-    rank => sub { /^(?:[1-9](?:p|d\??|k\??)|[12][0-9]k\??|30k\??)$/ },
+    rank => sub { /^(?:\-|\?|[1-9](?:p|d\??|k\??)|[12][0-9]k\??|30k\??)$/ },
     uri => [ uri(), sub { $_[0]->path eq '/gameArchives.jsp' } ],
 );
 
-cmp_deeply($got, {
-    games => array({
+my %is_type = map {( $_ => 1 )} (
+    'Ranked',
+    'Teaching',
+    'Simul',
+    'Rengo',
+    'Rengo Review',
+    'Review',
+    'Demonstration',
+    'Tournament',
+    'Free',
+);
+
+cmp_deeply($got, hash(
+    games => array(hash(
         sgf_uri => [ uri(), sub { $_[0]->path =~ /\.sgf$/ } ],
-        owner => \%user,
-        white => array( \%user ),
-        black => array( \%user ),
-        start_time => sub { /^\d\d\d\d-\d\d-\d\dT\d\d:\d\dZ$/ },
-        result => sub { /^(?:Unfinished|(?:B|W)\+(?:\d+(?:\.5)?|Resign|Forfeit|Time)|Draw)$/ },
+        owner => $user,
+        white => array( $user ),
+        black => array( $user ),
+        board_size => [ integer(), sub { $_[0] >= 2 && $_[0] <= 38 } ],
         handicap => [ integer(), sub { $_[0] >= 2 } ],
-    }),
+        start_time => datetime( '%Y-%m-%dT%H:%MZ' ),
+        type => sub { $is_type{$_[0]} },
+        result => sub { /^(?:Unfinished|Draw|(?:B|W)\+(?:Resign|Forfeit|Time|\d+(?:\.\d+)?))$/ },
+    )),
     tgz_uri => [ uri(), sub { $_[0]->path =~ /\.tar\.gz$/ } ],
     zip_uri => [ uri(), sub { $_[0]->path =~ /\.zip$/ } ],
-});
+    calendar => array(hash(
+        year => [ integer(), sub { $_[0] >= 1999 } ],
+        month => [ integer(), sub { $_[0] >= 1 && $_[0] <= 12 } ],
+        uri => [ uri(), sub { $_[0]->path eq '/gameArchives.jsp' } ],
+    )),
+));
 
 done_testing;
 

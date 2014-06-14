@@ -3,67 +3,112 @@ use strict;
 use warnings;
 use Exporter qw/import/;
 use Scalar::Util qw/blessed/;
+use Time::Piece qw/gmtime/;
 
 our @EXPORT_OK = qw(
     cmp_deeply
+    hash
     array
     uri
     integer
+    datetime
 );
 
 our %EXPORT_TAGS = (
-    cmp_deeply => [qw/cmp_deeply array uri integer/],
+    cmp_deeply => [qw/cmp_deeply hash array uri integer datetime/],
 );
 
 sub cmp_deeply {
-    my ( $got, $expected ) = @_;
-    
-    Test::More::isa_ok( $got, 'HASH' );
+    my ( $got, $expected, $name ) = @_;
+    local $_ = $got;
+    my $bool = $expected->( $got, $name || 'unknown' );
+    Test::More::ok( $bool, $name ) if defined $bool;
+    return;
+}
 
-    for my $key ( %$got ) {
-        if ( ref $expected->{$key} eq 'CODE' ) {
-            local $_ = $got->{$key};
-            my $bool = $expected->{$key}->( $got->{$key}, $key );
-            Test::More::ok( $bool, "$got->{$key} ($key)" ) if defined $bool;
-        }
-        elsif ( ref $expected->{$key} eq 'ARRAY' ) {
-            for my $e ( @{$expected->{$key}} ) {
-                local $_ = $got->{$key};
-                my $bool = $e->( $got->{$key}, $key );
-                Test::More::ok( $bool, "$got->{$key} ($key)" ) if defined $bool;
+sub hash {
+    my %expected = @_;
+
+    sub {
+        my ( $got, $name ) = @_;
+
+        Test::More::isa_ok( $got, 'HASH', $name );
+
+        $name .= ', $hash' unless $name =~ /->(?:\{[^\}]+\}|\[[^\]]+\])$/;
+
+        for my $key ( keys %$got ) {
+            my $value = $got->{$key};
+
+            my $n = "$name\->{$key}";
+               $n .= ": '$value'" unless ref($value) =~ /^(?:HASH|ARRAY)$/;
+
+            if ( ref $expected{$key} eq 'ARRAY' ) {
+                for my $e ( @{$expected{$key}} ) {
+                    local $_ = $value;
+                    my $bool = $e->( $value, $n );
+                    Test::More::ok( $bool, $n ) if defined $bool;
+                }
+            }
+            else {
+                local $_ = $value;
+                my $bool = $expected{$key}->( $value, $n );
+                Test::More::ok( $bool, $n ) if defined $bool;
             }
         }
-        elsif ( ref $expected->{$key} eq 'HASH' ) {
-            cmp_deeply( $got->{$key}, $expected->{$key} );
-        }
-    }
 
-    return;
+        return;
+    };
 }
 
 sub array {
     my $expected = shift;
 
     sub {
-        my $got = shift;
-        Test::More::isa_ok( $got, 'ARRAY' );
-        cmp_deeply( $_, $expected ) for @$got;
+        my ( $got, $name ) = @_;
+
+        Test::More::isa_ok( $got, 'ARRAY', $name );
+
+        $name .= ', $array' unless $name =~ /->(?:\{[^\}]+\}|\[[^\]]+\])$/;
+
+        my $i = 0;
+        for my $g ( @$got ) {
+            my $n = "$name\->[$i]";
+               $n .= ": '$g'" unless ref($g) =~ /^(?:HASH|ARRAY)$/;
+
+            local $_ = $g;
+            my $bool = $expected->( $g, $n );
+            Test::More::ok( $bool, $n ) if defined $bool;
+
+            $i++;
+        }
+
         return;
     };
 }
 
 sub uri {
     sub {
-        my ( $got, $key ) = @_;
-        Test::More::isa_ok( $got, 'URI', "$got ($key) should be URI" );
+        my ( $got, $name ) = @_;
+        Test::More::isa_ok( $got, 'URI', $name );
         return;
     };
 }
 
 sub integer {
     sub {
-        my ( $got, $key ) = @_;
-        Test::More::like( $got, qr{^?(?:0|\-?[1-9][0-9]*)$}, "$got ($key) should be integer" );
+        my ( $got, $name ) = @_;
+        Test::More::like( $got, qr{^(?:0|\-?[1-9][0-9]*)$}, "$name should be integer" );
+        return;
+    };
+}
+
+sub datetime {
+    my $format = shift;
+
+    sub {
+        my ( $got, $name ) = @_;
+        eval { gmtime->strptime( $got, $format ) };
+        Test::More::ok( !$@, "$name should be '$format': $@" );
         return;
     };
 }
