@@ -1,5 +1,9 @@
 language: perl
-env: AUTHOR_TESTING=1
+script: "perl Build.PL; ./Build; env AUTHOR_TESTING=1 ./Build test"
+notifications:
+  email:
+    - anazawa@cpan.org
 branches:
   only:
     - master
+
