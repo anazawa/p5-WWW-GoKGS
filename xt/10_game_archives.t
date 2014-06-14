@@ -29,7 +29,7 @@ my $type = sub {
     )}->{$_[0]};
 };
 
-cmp_deeply($got, hash(
+cmp_deeply $got, hash(
     games => array(hash(
         sgf_uri => [ uri(), sub { $_[0]->path =~ /\.sgf$/ } ],
         owner => $user,
@@ -48,6 +48,6 @@ cmp_deeply($got, hash(
         month => [ integer(), sub { $_[0] >= 1 && $_[0] <= 12 } ],
         uri => [ uri(), sub { $_[0]->path eq '/gameArchives.jsp' } ],
     )),
-));
+);
 
 done_testing;

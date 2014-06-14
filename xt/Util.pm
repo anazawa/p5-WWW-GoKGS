@@ -10,11 +10,12 @@ our @EXPORT_OK = qw(
     array
     uri
     integer
+    real
     datetime
 );
 
 our %EXPORT_TAGS = (
-    cmp_deeply => [qw/cmp_deeply hash array uri integer datetime/],
+    cmp_deeply => [qw/cmp_deeply hash array uri integer real datetime/],
 );
 
 sub cmp_deeply {
@@ -41,17 +42,17 @@ sub hash {
             my $n = "$name\->{$key}";
                $n .= ": '$value'" unless ref($value) =~ /^(?:HASH|ARRAY)$/;
 
-            if ( ref $expected{$key} eq 'ARRAY' ) {
+            if ( ref $expected{$key} eq 'CODE' ) {
+                local $_ = $value;
+                my $bool = $expected{$key}->( $value, $n );
+                Test::More::ok( $bool, $n ) if defined $bool;
+            }
+            elsif ( ref $expected{$key} eq 'ARRAY' ) {
                 for my $e ( @{$expected{$key}} ) {
                     local $_ = $value;
                     my $bool = $e->( $value, $n );
                     Test::More::ok( $bool, $n ) if defined $bool;
                 }
-            }
-            else {
-                local $_ = $value;
-                my $bool = $expected{$key}->( $value, $n );
-                Test::More::ok( $bool, $n ) if defined $bool;
             }
         }
 
@@ -96,7 +97,13 @@ sub uri {
 sub integer {
     sub {
         my ( $got, $name ) = @_;
-        Test::More::like( $got, qr{^(?:0|\-?[1-9][0-9]*)$}, "$name should be integer" );
+
+        Test::More::like(
+            $got,
+            qr{^(?:0|\-?[1-9][0-9]*)$},
+            "$name should be integer"
+        );
+
         return;
     };
 }
@@ -108,6 +115,20 @@ sub datetime {
         my ( $got, $name ) = @_;
         eval { gmtime->strptime( $got, $format ) };
         Test::More::ok( !$@, "$name should be '$format': $@" );
+        return;
+    };
+}
+
+sub real {
+    sub {
+        my ( $got, $name ) = @_;
+
+        Test::More::like(
+            $got,
+            qr{^(?:0|\-?[1-9][0-9]*(?:\.[0-9]*[1-9])?)$},
+            "$name should be real"
+        );
+
         return;
     };
 }
