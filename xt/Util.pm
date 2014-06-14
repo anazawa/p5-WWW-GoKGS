@@ -20,9 +20,12 @@ our %EXPORT_TAGS = (
 
 sub cmp_deeply {
     my ( $got, $expected, $name ) = @_;
-    local $_ = $got;
-    my $bool = $expected->( $got, $name || 'unknown' );
-    Test::More::ok( $bool, $name ) if defined $bool;
+
+    Test::More::subtest(
+        $name || 'unknown',
+        sub { $expected->( $got ) }
+    );
+
     return;
 }
 
@@ -30,11 +33,10 @@ sub hash {
     my %expected = @_;
 
     sub {
-        my ( $got, $name ) = @_;
+        my $got = shift;
+        my $name = shift || '$hash';
 
         Test::More::isa_ok( $got, 'HASH', $name );
-
-        $name .= ', $hash' unless $name =~ /->(?:\{[^\}]+\}|\[[^\]]+\])$/;
 
         for my $key ( keys %$got ) {
             my $value = $got->{$key};
@@ -64,11 +66,10 @@ sub array {
     my $expected = shift;
 
     sub {
-        my ( $got, $name ) = @_;
+        my $got = shift;
+        my $name = shift || '$array';
 
         Test::More::isa_ok( $got, 'ARRAY', $name );
-
-        $name .= ', $array' unless $name =~ /->(?:\{[^\}]+\}|\[[^\]]+\])$/;
 
         my $i = 0;
         for my $g ( @$got ) {
@@ -108,17 +109,6 @@ sub integer {
     };
 }
 
-sub datetime {
-    my $format = shift;
-
-    sub {
-        my ( $got, $name ) = @_;
-        eval { gmtime->strptime( $got, $format ) };
-        Test::More::ok( !$@, "$name should be '$format': $@" );
-        return;
-    };
-}
-
 sub real {
     sub {
         my ( $got, $name ) = @_;
@@ -129,6 +119,17 @@ sub real {
             "$name should be real"
         );
 
+        return;
+    };
+}
+
+sub datetime {
+    my $format = shift;
+
+    sub {
+        my ( $got, $name ) = @_;
+        eval { gmtime->strptime( $got, $format ) };
+        Test::More::ok( !$@, "$name should be '$format': $@" );
         return;
     };
 }

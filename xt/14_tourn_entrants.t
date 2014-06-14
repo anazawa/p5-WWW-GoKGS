@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use xt::Util qw/:cmp_deeply/;
-use Test::More;
+use Test::More tests => 3;
 use WWW::GoKGS::Scraper::TournEntrants;
 
 plan skip_all => 'AUTHOR_TESTING is required' unless $ENV{AUTHOR_TESTING};
@@ -68,5 +68,3 @@ cmp_deeply
     $tourn_entrants->query( id => 525, sort => 'n' ),
     $round_robin,
     'Round Robin';
-
-done_testing;

@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use xt::Util qw/:cmp_deeply/;
-use Test::More;
+use Test::More tests => 1;
 use WWW::GoKGS::Scraper::TournInfo;
 
 plan skip_all => 'AUTHOR_TESTING is required' unless $ENV{AUTHOR_TESTING};
@@ -21,5 +21,3 @@ cmp_deeply $got, hash(
         )),
     ),
 );
-
-done_testing;
