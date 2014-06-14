@@ -7,10 +7,7 @@ use WWW::GoKGS::Scraper::GameArchives;
 plan skip_all => 'AUTHOR_TESTING is required' unless $ENV{AUTHOR_TESTING};
 
 my $game_archives = WWW::GoKGS::Scraper::GameArchives->new;
-
-my $got = $game_archives->query(
-    user => 'anazawa',
-);
+my $got = $game_archives->query( user => 'anazawa' );
 
 my $user = hash(
     name => sub { /^[a-zA-Z][a-zA-Z0-9]{0,9}$/ },
@@ -18,17 +15,19 @@ my $user = hash(
     uri => [ uri(), sub { $_[0]->path eq '/gameArchives.jsp' } ],
 );
 
-my %is_type = map {( $_ => 1 )} (
-    'Ranked',
-    'Teaching',
-    'Simul',
-    'Rengo',
-    'Rengo Review',
-    'Review',
-    'Demonstration',
-    'Tournament',
-    'Free',
-);
+my $type = sub {
+    +{ map {( $_ => 1 )} (
+        'Ranked',
+        'Teaching',
+        'Simul',
+        'Rengo',
+        'Rengo Review',
+        'Review',
+        'Demonstration',
+        'Tournament',
+        'Free',
+    )}->{$_[0]};
+};
 
 cmp_deeply($got, hash(
     games => array(hash(
@@ -39,7 +38,7 @@ cmp_deeply($got, hash(
         board_size => [ integer(), sub { $_[0] >= 2 && $_[0] <= 38 } ],
         handicap => [ integer(), sub { $_[0] >= 2 } ],
         start_time => datetime( '%Y-%m-%dT%H:%MZ' ),
-        type => sub { $is_type{$_[0]} },
+        type => $type,
         result => sub { /^(?:Unfinished|Draw|(?:B|W)\+(?:Resign|Forfeit|Time|\d+(?:\.\d+)?))$/ },
     )),
     tgz_uri => [ uri(), sub { $_[0]->path =~ /\.tar\.gz$/ } ],
@@ -52,4 +51,3 @@ cmp_deeply($got, hash(
 ));
 
 done_testing;
-

@@ -2,7 +2,6 @@ package xt::Util;
 use strict;
 use warnings;
 use Exporter qw/import/;
-use Scalar::Util qw/blessed/;
 use Time::Piece qw/gmtime/;
 
 our @EXPORT_OK = qw(
