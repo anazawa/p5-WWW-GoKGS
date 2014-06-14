@@ -1,10 +1,15 @@
 use strict;
 use warnings;
 use xt::Util qw/:cmp_deeply/;
-use Test::More tests => 1;
+use Test::More;
 use WWW::GoKGS::Scraper::TournGames;
 
-plan skip_all => 'AUTHOR_TESTING is required' unless $ENV{AUTHOR_TESTING};
+if ( $ENV{AUTHOR_TESTING} ) {
+    plan skip_all => 'AUTHOR_TESTING is required';
+}
+else {
+    plan tests => 1;
+}
 
 my $tourn_games = WWW::GoKGS::Scraper::TournGames->new;
 my $got = $tourn_games->query( id => 879, round => 1 );

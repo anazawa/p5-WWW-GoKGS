@@ -1,10 +1,15 @@
 use strict;
 use warnings;
 use xt::Util qw/:cmp_deeply/;
-use Test::More tests => 3;
+use Test::More;
 use WWW::GoKGS::Scraper::TournEntrants;
 
-plan skip_all => 'AUTHOR_TESTING is required' unless $ENV{AUTHOR_TESTING};
+if ( $ENV{AUTHOR_TESTING} ) {
+    plan skip_all => 'AUTHOR_TESTING is required';
+}
+else {
+    plan tests => 3;
+}
 
 my $links = hash(
     rounds => array(hash(

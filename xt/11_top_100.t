@@ -1,10 +1,15 @@
 use strict;
 use warnings;
 use xt::Util qw/:cmp_deeply/;
-use Test::More tests => 1;
+use Test::More;
 use WWW::GoKGS::Scraper::Top100;
 
-plan skip_all => 'AUTHOR_TESTING is required' unless $ENV{AUTHOR_TESTING};
+if ( $ENV{AUTHOR_TESTING} ) {
+    plan skip_all => 'AUTHOR_TESTING is required';
+}
+else {
+    plan tests => 1;
+}
 
 my $top_100 = WWW::GoKGS::Scraper::Top100->new;
 my $got = $top_100->query;
