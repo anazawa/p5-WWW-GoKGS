@@ -5,10 +5,10 @@ use Test::More;
 use WWW::GoKGS::Scraper::TournGames;
 
 if ( $ENV{AUTHOR_TESTING} ) {
-    plan skip_all => 'AUTHOR_TESTING is required';
+    plan tests => 1;
 }
 else {
-    plan tests => 1;
+    plan skip_all => 'AUTHOR_TESTING is required';
 }
 
 my $tourn_games = WWW::GoKGS::Scraper::TournGames->new;

@@ -5,10 +5,10 @@ use Test::More;
 use WWW::GoKGS::Scraper::TournEntrants;
 
 if ( $ENV{AUTHOR_TESTING} ) {
-    plan skip_all => 'AUTHOR_TESTING is required';
+    plan tests => 3;
 }
 else {
-    plan tests => 3;
+    plan skip_all => 'AUTHOR_TESTING is required';
 }
 
 my $links = hash(

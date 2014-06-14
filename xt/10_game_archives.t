@@ -5,10 +5,10 @@ use Test::More;
 use WWW::GoKGS::Scraper::GameArchives;
 
 if ( $ENV{AUTHOR_TESTING} ) {
-    plan skip_all => 'AUTHOR_TESTING is required';
+    plan tests => 1;
 }
 else {
-    plan tests => 1;
+    plan skip_all => 'AUTHOR_TESTING is required';
 }
 
 my $game_archives = WWW::GoKGS::Scraper::GameArchives->new;
