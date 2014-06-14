@@ -1,5 +1,7 @@
 Revision history for Perl extension WWW::GoKGS.
 
+0.09 Jun 15, 2014
+
   - Switch to Module::Build
   - Add author tests
   - Tests require Time::Piece
