@@ -82,11 +82,18 @@ subtest 'paranoid' => sub {
         is $got->{zip_uri}, $expected->{zip_uri}, '$hash->{zip_uri}';
     }
 
+    isa_ok $got->{calendar}, 'ARRAY', '$hash->{calendar}';
+
     my $i = 0;
     for my $calendar ( @{$got->{calendar}} ) {
         my $name = "\$hash->{calendar}->[$i]";
 
-        unless ( exists $calendar->{uri} ) {
+        isa_ok $calendar, 'HASH', $name;
+
+        if ( exists $calendar->{uri} ) {
+            isa_ok $calendar->{uri}, 'URI', "$name\->{uri}";
+        }
+        else {
             is $calendar->{year}, 2014, "$name\->{year}";
             is $calendar->{month}, 5, "$name\->{month}";
             next;
@@ -100,7 +107,7 @@ subtest 'paranoid' => sub {
             month => $calendar->{month},
         );
 
-        is_deeply \%got, \%expected, "$name\->{uri}";
+        is_deeply \%got, \%expected, "$name\->{uri}->query_form";
     }
     continue {
         $i++;
