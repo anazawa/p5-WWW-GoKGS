@@ -23,15 +23,16 @@ my $build = Module::Build->new(
         'Test::Exception' => 0,
         'Test::Pod' => '1.45',
         'Time::Piece' => 0,
+        'Path::Class' => 0,
     },
     test_files => [ 't/', 'xt/' ],
     meta_merge => {
         no_index => {
-            directory => [ 'inc', 't', 'tx', 'examples' ],
+            directory => [ 't', 'tx', 'examples' ],
         },
-	resources => {
+        resources => {
             repository => 'git://github.com/anazawa/p5-WWW-GoKGS.git',
-	},
+        },
     },
 );
 

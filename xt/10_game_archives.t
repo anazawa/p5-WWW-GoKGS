@@ -2,6 +2,7 @@ use strict;
 use warnings;
 use xt::Util qw/:cmp_deeply/;
 use Path::Class qw/file/;
+use Scalar::Util qw/blessed/;
 use Test::More;
 use WWW::GoKGS::Scraper::GameArchives;
 
@@ -69,18 +70,43 @@ subtest 'paranoid' => sub {
         month => 5,
     );
 
-    {
-        my $expected = do +file(
-            'xt',
-            'data',
-            'GameArchives',
-            '20140615-user-anazawa-year-2014-month-5.pl',
-        );
+    my $expected = do +file(
+        'xt',
+        'data',
+        'GameArchives',
+        '20140615-user-anazawa-year-2014-month-5.pl',
+    );
 
-        is_deeply $got->{games}, $expected->{games}, '$hash->{games}';
-        is $got->{tgz_uri}, $expected->{tgz_uri}, '$hash->{tgz_uri}';
-        is $got->{zip_uri}, $expected->{zip_uri}, '$hash->{zip_uri}';
-    }
+    # Remove oldAccounts=y which is added to $user->{uri}
+    # when the account expires
+    my $remove_oldAccounts = sub {
+        my ( $value ) = @_;
+
+        return unless blessed $value and $value->isa( 'URI' );
+        return unless $value->path eq '/gameArchives.jsp';
+
+        my $uri = $value->clone;
+        my @query = $uri->query_form;
+
+        my @q;
+        while ( my ($k, $v) = splice @query, 0, 2 ) {
+            push @q, $k, $v unless $k eq 'oldAccounts';
+        }
+
+        $uri->query_form( @q );
+        
+        $_[0] = $uri; # overwrite
+
+        return;
+    };
+
+    _each_value( $got, $remove_oldAccounts );
+    _each_value( $expected, $remove_oldAccounts );
+
+    is_deeply $got->{games}, $expected->{games}, '$hash->{games}';
+
+    is $got->{tgz_uri}, $expected->{tgz_uri}, '$hash->{tgz_uri}';
+    is $got->{zip_uri}, $expected->{zip_uri}, '$hash->{zip_uri}';
 
     isa_ok $got->{calendar}, 'ARRAY', '$hash->{calendar}';
 
@@ -113,3 +139,21 @@ subtest 'paranoid' => sub {
         $i++;
     }
 };
+
+sub _each_value {
+    my ( $data, $code ) = @_;
+
+    for my $value (
+        ref $data eq 'HASH'  ? values %$data :
+        ref $data eq 'ARRAY' ? @$data        : $data
+    ) {
+        if ( ref($value) =~ /^(?:ARRAY|HASH)$/ ) {
+            _each_value( $value, $code );
+        }
+        else {
+            $code->( $value );
+        }
+    }
+
+    return;
+}
