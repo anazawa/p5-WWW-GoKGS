@@ -6,14 +6,12 @@ use Scalar::Util qw/blessed/;
 use Test::More;
 use WWW::GoKGS::Scraper::GameArchives;
 
-if ( $ENV{AUTHOR_TESTING} ) {
-    plan tests => 2;
-}
-else {
-    plan skip_all => 'AUTHOR_TESTING is required';
-}
+plan skip_all => 'AUTHOR_TESTING is required' unless $ENV{AUTHOR_TESTING};
+plan tests => 2;
 
 subtest 'relaxed' => sub {
+    plan tests => 1;
+
     my $game_archives = WWW::GoKGS::Scraper::GameArchives->new;
     my $got = $game_archives->query( user => 'anazawa' );
 
@@ -118,6 +116,7 @@ subtest 'paranoid' => sub {
 
         if ( exists $calendar->{uri} ) {
             isa_ok $calendar->{uri}, 'URI', "$name\->{uri}";
+            is $calendar->{uri}->path, '/gameArchives.jsp', "$name\->{uri}->path";
         }
         else {
             is $calendar->{year}, 2014, "$name\->{year}";
@@ -138,6 +137,8 @@ subtest 'paranoid' => sub {
     continue {
         $i++;
     }
+
+    done_testing;
 };
 
 sub _each_value {

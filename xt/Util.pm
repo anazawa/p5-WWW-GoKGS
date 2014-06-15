@@ -100,7 +100,7 @@ sub integer {
         Test::More::like(
             $got,
             qr{^(?:0|\-?[1-9][0-9]*)$},
-            "$name should be integer"
+            "'$name' should be integer"
         );
 
         return;
@@ -114,7 +114,7 @@ sub real {
         Test::More::like(
             $got,
             qr{^(?:0|\-?[1-9][0-9]*(?:\.[0-9]*[1-9])?)$},
-            "$name should be real"
+            "'$name' should be real"
         );
 
         return;
@@ -127,7 +127,7 @@ sub datetime {
     sub {
         my ( $got, $name ) = @_;
         eval { gmtime->strptime( $got, $format ) };
-        Test::More::ok( !$@, "$name ($got) should be '$format': $@" );
+        Test::More::ok( !$@, "'$name' ($got) should be '$format': $@" );
         return;
     };
 }
