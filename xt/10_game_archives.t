@@ -15,7 +15,7 @@ subtest 'relaxed' => sub {
     my $game_archives = WWW::GoKGS::Scraper::GameArchives->new;
     my $got = $game_archives->query( user => 'anazawa' );
 
-    my $user = hash(
+    my %user = (
         name => user_name(),
         rank => user_rank(),
         uri => [ uri(), sub { $_[0]->path eq '/gameArchives.jsp' } ],
@@ -36,24 +36,24 @@ subtest 'relaxed' => sub {
     };
 
     my $expected = hash(
-        games => array(hash(
+        games => array_of_hashes(
             sgf_uri => [ uri(), sub { $_[0]->path =~ /\.sgf$/ } ],
-            owner => $user,
-            white => array( $user ),
-            black => array( $user ),
+            owner => hash( %user ),
+            white => array_of_hashes( %user ),
+            black => array_of_hashes( %user ),
             board_size => [ integer(), sub { $_[0] >= 2 && $_[0] <= 38 } ],
             handicap => [ integer(), sub { $_[0] >= 2 } ],
             start_time => datetime( '%Y-%m-%dT%H:%MZ' ),
             type => $type,
             result => game_result(),
-        )),
+        ),
         tgz_uri => [ uri(), sub { $_[0]->path =~ /\.tar\.gz$/ } ],
         zip_uri => [ uri(), sub { $_[0]->path =~ /\.zip$/ } ],
-        calendar => array(hash(
+        calendar => array_of_hashes(
             year => [ integer(), sub { $_[0] >= 1999 } ],
             month => [ integer(), sub { $_[0] >= 1 && $_[0] <= 12 } ],
             uri => [ uri(), sub { $_[0]->path eq '/gameArchives.jsp' } ],
-        )),
+        ),
     );
 
     cmp_deeply $got, $expected, 'user=anazawa';
