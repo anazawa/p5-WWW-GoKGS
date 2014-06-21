@@ -13,7 +13,10 @@ subtest 'relaxed' => sub {
     plan tests => 1;
 
     my $game_archives = WWW::GoKGS::Scraper::GameArchives->new;
-    my $got = $game_archives->query( user => 'anazawa' );
+
+    my $got = $game_archives->query(
+        user => 'anazawa',
+    );
 
     my %user = (
         name => user_name(),
@@ -21,8 +24,8 @@ subtest 'relaxed' => sub {
         uri => [ uri(), sub { $_[0]->path eq '/gameArchives.jsp' } ],
     );
 
-    my $type = sub {
-        +{ map {( $_ => 1 )} (
+    my $type = do {
+        my %is_type = map {( $_ => 1 )} (
             'Ranked',
             'Teaching',
             'Simul',
@@ -32,7 +35,9 @@ subtest 'relaxed' => sub {
             'Demonstration',
             'Tournament',
             'Free',
-        )}->{$_[0]};
+        );
+
+        sub { $is_type{$_[0]} };
     };
 
     my $expected = hash(
@@ -77,29 +82,8 @@ subtest 'paranoid' => sub {
 
     # Remove oldAccounts=y which is added to $user->{uri}
     # when the account expires
-    my $remove_oldAccounts = sub {
-        my ( $value ) = @_;
-
-        return unless blessed $value and $value->isa( 'URI' );
-        return unless $value->path eq '/gameArchives.jsp';
-
-        my $uri = $value->clone;
-        my @query = $uri->query_form;
-
-        my @q;
-        while ( my ($k, $v) = splice @query, 0, 2 ) {
-            push @q, $k, $v unless $k eq 'oldAccounts';
-        }
-
-        $uri->query_form( @q );
-        
-        $_[0] = $uri; # overwrite
-
-        return;
-    };
-
-    _each_value( $got, $remove_oldAccounts );
-    _each_value( $expected, $remove_oldAccounts );
+    _remove_oldAccounts( $got );
+    _remove_oldAccounts( $expected );
 
     is_deeply $got->{games}, $expected->{games}, '$hash->{games}';
 
@@ -141,19 +125,28 @@ subtest 'paranoid' => sub {
     done_testing;
 };
 
-sub _each_value {
-    my ( $data, $code ) = @_;
+sub _remove_oldAccounts {
+    my $data = shift;
 
     for my $value (
         ref $data eq 'HASH'  ? values %$data :
         ref $data eq 'ARRAY' ? @$data        : $data
     ) {
-        if ( ref($value) =~ /^(?:ARRAY|HASH)$/ ) {
-            _each_value( $value, $code );
+        _remove_oldAccounts( $value ) if ref($value) =~ /^(?:ARRAY|HASH)$/;
+        next unless blessed $value and $value->isa( 'URI' );
+        next unless $value->path eq '/gameArchives.jsp';
+
+        my $uri = $value->clone;
+        my @query = $uri->query_form;
+
+        my @q;
+        while ( my ($k, $v) = splice @query, 0, 2 ) {
+            push @q, $k, $v unless $k eq 'oldAccounts';
         }
-        else {
-            $code->( $value );
-        }
+
+        $uri->query_form( @q );
+        
+        $value = $uri; # overwrite
     }
 
     return;
