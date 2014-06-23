@@ -33,7 +33,7 @@ sub _build_game_archives {
     );
 
     $game_archives->add_filter(
-        'games[].start_time' => $self->date_filter,
+        'games[].start_time' => $self->wrapped_date_filter,
     );
 
     $game_archives;
@@ -63,9 +63,9 @@ sub _build_tourn_info {
     );
 
     $tourn_info->add_filter(
-        'description' => $self->html_filter,
-        'links.rounds[].start_time' => $self->date_filter,
-        'links.rounds[].end_time'   => $self->date_filter,
+        'description' => $self->wrapped_html_filter,
+        'links.rounds[].start_time' => $self->wrapped_date_filter,
+        'links.rounds[].end_time'   => $self->wrapped_date_filter,
     );
 
     $tourn_info;
@@ -79,8 +79,8 @@ sub _build_tourn_entrants {
     );
 
     $tourn_entrants->add_filter(
-        'links.rounds[].start_time' => $self->date_filter,
-        'links.rounds[].end_time'   => $self->date_filter,
+        'links.rounds[].start_time' => $self->wrapped_date_filter,
+        'links.rounds[].end_time'   => $self->wrapped_date_filter,
     );
 
     $tourn_entrants;
@@ -94,9 +94,9 @@ sub _build_tourn_games {
     );
 
     $tourn_games->add_filter(
-        'games[].start_time' => $self->date_filter,
-        'links.rounds[].start_time' => $self->date_filter,
-        'links.rounds[].end_time'   => $self->date_filter,
+        'games[].start_time' => $self->wrapped_date_filter,
+        'links.rounds[].start_time' => $self->wrapped_date_filter,
+        'links.rounds[].end_time'   => $self->wrapped_date_filter,
     );
 
     $tourn_games;
@@ -142,7 +142,7 @@ sub make_accessor {
             if ( @_ ) {
                 $self->set_scraper( $path => shift );
             }
-            elsif ( $self->_has_scraper($path) ) {
+            elsif ( exists $self->_scrapers->{$path} ) {
                 $self->get_scraper( $path );
             }
             else {
@@ -163,61 +163,120 @@ sub make_accessor {
 sub new {
     my $class = shift;
     my %args = @_ == 1 ? %{$_[0]} : @_;
-    bless \%args, $class;
+    my ( $agent, $from ) = delete @args{qw/agent from/};
+    my $self = bless { %args }, $class;
+
+    $self->agent( $agent ) if defined $agent;
+    $self->from( $from ) if defined $from;
+
+    $self;
 }
 
 sub user_agent {
     my $self = shift;
-    $self->{user_agent} ||= $self->_build_user_agent;
+
+    if ( @_ ) {
+        $self->{user_agent} = shift;
+        for my $scraper ( values %{$self->_scrapers} ) {
+            $scraper->user_agent( $self->{user_agent} );
+        }
+    }
+    elsif ( exists $self->{user_agent} ) {
+        $self->{user_agent};
+    }
+    else {
+        $self->{user_agent} = $self->_build_user_agent;
+    }
 }
 
 sub _build_user_agent {
     my $self = shift;
 
     LWP::RobotUA->new(
-        agent => sprintf( '%s/%s', ref $self, $self->VERSION ),
+        agent => $self->agent,
         from => $self->from,
     );
 }
 
+sub agent {
+    my $self = shift;
+
+    if ( exists $self->{user_agent} ) {
+        $self->user_agent->agent( @_ );
+    }
+    elsif ( @_ ) {
+        $self->{agent} = shift;
+    }
+    else {
+        $self->{agent} ||= $self->_build_agent;
+    }
+}
+
+sub _build_agent {
+    my $self = shift;
+    sprintf '%s/%s', ref $self, $self->VERSION;
+}
+
 sub from {
-    $_[0]->{from};
+    my $self = shift;
+
+    if ( exists $self->{user_agent} ) {
+        $self->user_agent->from( @_ );
+    }
+    elsif ( @_ ) {
+        $self->{from} = shift;
+    }
+    else {
+        $self->{from};
+    }
 }
 
 sub date_filter {
-    $_[0]->{date_filter} ||= sub { $_[0] };
+    my $self = shift;
+    $self->{date_filter} = shift if @_;
+    $self->{date_filter} ||= sub { $_[0] };
 }
 
 sub html_filter {
-    $_[0]->{html_filter} ||= sub { $_[0] };
+    my $self = shift;
+    $self->{html_filter} = shift if @_;
+    $self->{html_filter} ||= sub { $_[0] };
 }
 
-sub _scraper {
-    $_[0]->{scraper} ||= {};
+sub wrapped_date_filter {
+    my $self = shift;
+    sub { $self->date_filter->(@_) };
+}
+
+sub wrapped_html_filter {
+    my $self = shift;
+    sub { $self->html_filter->(@_) };
+}
+
+sub _scrapers {
+    $_[0]->{_scrapers} ||= {};
 }
 
 sub get_scraper {
     my ( $self, $path ) = @_;
-    $self->_scraper->{$path};
-}
-
-sub _has_scraper {
-    my ( $self, $path ) = @_;
-    exists $self->_scraper->{$path};
+    $self->_scrapers->{$path};
 }
 
 sub set_scraper {
     my ( $self, @pairs ) = @_;
-    my $scraper = $self->_scraper;
+    my $scrapers = $self->_scrapers;
 
     croak "Odd number of arguments passed to 'set_scraper'" if @pairs % 2;
 
-    while ( my ($key, $value) = splice @pairs, 0, 2 ) {
-        if ( blessed $value and $value->can('scrape') ) {
-            $scraper->{$key} = $value;
+    while ( my ($path, $scraper) = splice @pairs, 0, 2 ) {
+        unless ( blessed $scraper and $scraper->can('scrape') ) {
+            croak "$scraper ($path scraper) is missing 'scrape' method";
+        }
+        elsif ( !$scraper->can('user_agent') ) {
+            croak "$scraper ($path scraper) is missing 'user_agent' method";
         }
         else {
-            croak "$value ($key scraper) is missing 'scrape' method";
+            $scrapers->{$path} = $scraper;
         }
     }
 
