@@ -163,13 +163,7 @@ sub make_accessor {
 sub new {
     my $class = shift;
     my %args = @_ == 1 ? %{$_[0]} : @_;
-    my ( $agent, $from ) = delete @args{qw/agent from/};
-    my $self = bless { %args }, $class;
-
-    $self->agent( $agent ) if defined $agent;
-    $self->from( $from ) if defined $from;
-
-    $self;
+    bless \%args, $class;
 }
 
 sub user_agent {
@@ -385,22 +379,14 @@ L<WWW::GoKGS::Scraper::TournGames>.
 
 =over 4
 
-=item $email_address = $gokgs->from : Required
-
-Returns your email address which is used to construct L<LWP::RobotUA> object.
-The email address is used to generate the From request header
-which indicates who is making the request.
-This attribute is required and read-only.
-
-  my $gokgs = WWW::GoKGS->new(
-      from => 'user@example.com' # used to construct LWP::RobotUA
-  );
-
 =item $UserAgent = $gokgs->user_agent
 
-Returns a user agent object which is used to C<GET> the requested
-resource. Defaults to L<LWP::RobotUA> object which consults
-C<http://www.gokgs.com/robots.txt> before sending HTTP requests.
+=item $gokgs->user_agent( LWP::RoboUA->new(...) )
+
+Can be used to get or set a user agent object which is used to C<GET>
+the requested resource. Defaults to L<LWP::RobotUA> object which consults
+C<http://www.gokgs.com/robots.txt> before sending HTTP requests,
+and also sets a proper delay between requests.
 
 NOTE: C<LWP::RobotUA> fails to read C</robots.txt>
 since the KGS web server doesn't returns the Content-Type response header
@@ -419,40 +405,57 @@ You can also set your own user agent object as follows:
 NOTE: You should set a delay between requests to avoid overloading
 the KGS server.
 
-This attribute is read-only.
+=item $email_address = $gokgs->from
+
+=item $gokgs->from( 'user@example.com' )
+
+Can be used to get or set your email address which is used 
+by C<< $gokgs->user_agent >> to send the From request header
+that indicates who is making the request. This attribute must be defined
+when you use L<LWP::RobotUA>.
+
+  my $gokgs = WWW::GoKGS->new(
+      from => 'user@example.com'
+  );
+
+=item $product_id = $gokgs->agent
+
+=item $gokgs->agent( 'MyAgent/0.01' )
+
+Can be used to get or set the product token that is used by
+C<< $gokgs->user_agent >> to send the User-Agent request header.
+Defaults to C<WWW::GoKGS/#.##>, where C<#.##> is substituted with
+the version number of this module.
 
 =item $CodeRef = $gokgs->html_filter
 
-Returns an HTML filter. Defaults to an anonymous subref which just returns
-the given argument (C<sub { $_[0] }>). The callback is called with
-an HTML string. The return value is used as the filtered value.
-This attribute is read-only.
+=item $gokgs->html_filter( sub { my $html = shift; ... } )
 
-  my $gokgs = WWW::GoKGS->new(
-      from => 'user@example.com',
-      html_filter => sub {
-          my $html = shift;
-          $html =~ s/<.*?>//g; # strip HTML tags
-          $html;
-      }
-  );
+Can be used to get or set an HTML filter. Defaults to an anonymous subref
+which just returns the given argument (C<sub { $_[0] }>). The callback is
+called with an HTML string. The return value is used as the filtered value.
+
+  $gokgs->html_filter(sub {
+      my $html = shift;
+      $html =~ s/<.*?>//g; # strip HTML tags
+      $html;
+  });
 
 =item $CodeRef = $gokgs->date_filter
 
-Returns a date filter. Defaults to an anonymous subref which just returns
-the given argument (C<sub { $_[0] }>). The callback is called with
-a date string such as C<2014-05-17T19:05Z>. The return value is used as
-the filtered value. This attribute is read-only.
+=item $gokgs->date_filter( sub { my $date = shift; ... } )
+
+Can be used to get or set a date filter. Defaults to an anonymous subref
+which just returns the given argument (C<sub { $_[0] }>). The callback is
+called with a date string such as C<2014-05-17T19:05Z>. The return value is
+used as the filtered value.
 
   use Time::Piece qw/gmtime/;
 
-  my $gokgs = WWW::GoKGS->new(
-      from => 'user@example.com',
-      date_filter => sub {
-          my $date = shift; # => "2014-05-17T19:05Z"
-          gmtime->strptime( $date, '%Y-%m-%dT%H:%MZ' );
-      }
-  );
+  $gokgs->date_filter(sub {
+      my $date = shift; # => "2014-05-17T19:05Z"
+      gmtime->strptime( $date, '%Y-%m-%dT%H:%MZ' );
+  });
 
 =item $GameArchives = $gokgs->game_archives
 
