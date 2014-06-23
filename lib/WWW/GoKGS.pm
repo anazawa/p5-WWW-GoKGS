@@ -27,10 +27,7 @@ __PACKAGE__->mk_accessors(
 
 sub _build_game_archives {
     my $self = shift;
-
-    my $game_archives = WWW::GoKGS::Scraper::GameArchives->new(
-        user_agent => $self->user_agent,
-    );
+    my $game_archives = WWW::GoKGS::Scraper::GameArchives->new;
 
     $game_archives->add_filter(
         'games[].start_time' => $self->wrapped_date_filter,
@@ -41,26 +38,17 @@ sub _build_game_archives {
 
 sub _build_top_100 {
     my $self = shift;
-
-    WWW::GoKGS::Scraper::Top100->new(
-        user_agent => $self->user_agent,
-    );
+    WWW::GoKGS::Scraper::Top100->new;
 }
 
 sub _build_tourn_list {
     my $self = shift;
-
-    WWW::GoKGS::Scraper::TournList->new(
-        user_agent => $self->user_agent,
-    );
+    WWW::GoKGS::Scraper::TournList->new;
 }
 
 sub _build_tourn_info {
     my $self = shift;
-
-    my $tourn_info = WWW::GoKGS::Scraper::TournInfo->new(
-        user_agent => $self->user_agent,
-    );
+    my $tourn_info = WWW::GoKGS::Scraper::TournInfo->new;
 
     $tourn_info->add_filter(
         'description' => $self->wrapped_html_filter,
@@ -73,10 +61,7 @@ sub _build_tourn_info {
 
 sub _build_tourn_entrants {
     my $self = shift;
-
-    my $tourn_entrants = WWW::GoKGS::Scraper::TournEntrants->new(
-        user_agent => $self->user_agent,
-    );
+    my $tourn_entrants = WWW::GoKGS::Scraper::TournEntrants->new;
 
     $tourn_entrants->add_filter(
         'links.rounds[].start_time' => $self->wrapped_date_filter,
@@ -88,10 +73,7 @@ sub _build_tourn_entrants {
 
 sub _build_tourn_games {
     my $self = shift;
-
-    my $tourn_games = WWW::GoKGS::Scraper::TournGames->new(
-        user_agent => $self->user_agent,
-    );
+    my $tourn_games = WWW::GoKGS::Scraper::TournGames->new;
 
     $tourn_games->add_filter(
         'games[].start_time' => $self->wrapped_date_filter,
@@ -172,7 +154,7 @@ sub user_agent {
     if ( @_ ) {
         $self->{user_agent} = shift;
         for my $scraper ( values %{$self->_scrapers} ) {
-            $scraper->user_agent( $self->{user_agent} );
+            $scraper->user_agent( $self->{user_agent} ); # overwrite
         }
     }
     elsif ( exists $self->{user_agent} ) {
@@ -270,6 +252,7 @@ sub set_scraper {
             croak "$scraper ($path scraper) is missing 'user_agent' method";
         }
         else {
+            $scraper->user_agent( $self->user_agent ); # overwrite
             $scrapers->{$path} = $scraper;
         }
     }
