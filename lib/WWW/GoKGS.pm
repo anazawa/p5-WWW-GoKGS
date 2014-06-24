@@ -245,16 +245,12 @@ sub set_scraper {
     croak "Odd number of arguments passed to 'set_scraper'" if @pairs % 2;
 
     while ( my ($path, $scraper) = splice @pairs, 0, 2 ) {
-        unless ( blessed $scraper and $scraper->can('scrape') ) {
-            croak "$scraper ($path scraper) is missing 'scrape' method";
-        }
-        elsif ( !$scraper->can('user_agent') ) {
-            croak "$scraper ($path scraper) is missing 'user_agent' method";
-        }
-        else {
-            $scraper->user_agent( $self->user_agent ); # overwrite
-            $scrapers->{$path} = $scraper;
-        }
+        croak "$scraper ($path scraper) is missing 'scrape' method"
+            unless blessed $scraper and $scraper->can('scrape');
+        croak "$scraper ($path scraper) is missing 'user_agent' method"
+            unless $scraper->can('user_agent');
+        $scraper->user_agent( $self->user_agent ); # overwrite
+        $scrapers->{$path} = $scraper;
     }
 
     return;
