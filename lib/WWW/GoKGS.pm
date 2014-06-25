@@ -493,6 +493,13 @@ C</tournGames.jsp>. Defaults to a L<WWW::GoKGS::Scraper::TournGames> object.
 
 =over 4
 
+=item $bool = $gokgs->can_scrape( '/fooBar.jsp' )
+
+=item $bool = $gokgs->can_scrape( 'http://www.gogks.com/fooBar.jsp' )
+
+Returns a Boolean value telling whether C<$gokgs> can C<scrape> the resource
+specified by the given path.
+
 =item $HashRef = $gokgs->scrape( '/gameArchives.jsp?user=foo' )
 
 =item $HashRef = $gokgs->scrape( 'http://www.gokgs.com/gameArchives.jsp?user=foo' )
@@ -593,8 +600,8 @@ The callback routine is called with two parameters; the path to the resource
 on KGS and the scraper object which can scrape the resource.
 
   $gokgs->each_scraper(sub {
-      my $path = shift; # => "/fooBar.jsp"
-      my $scraper = shift; # isa WWW::GoKGS::Scraper::FooBar
+      my $path = shift; # => "/gameArchives.jsp"
+      my $scraper = shift; # isa WWW::GoKGS::Scraper::GameArchives
 
       # overwrite "user_agent" attributes of all the scraper objects
       $scraper->user_agent( $gokgs->user_agent );
@@ -607,11 +614,29 @@ on KGS and the scraper object which can scrape the resource.
 
 =over 4
 
+=item @paths = $class->known_paths
+
+Returns an incomplete list of paths to KGS resources.
+You can add a new path by subclassing or sending a patch to the module author.
+
+  my @paths = WWW::GoKGS->known_paths;
+  # => (
+  #    "/graphPage.jsp",
+  #    "/gameArchives.jsp",
+  #    "/plusSchedule.jsp",
+  #    "/top100.jsp,
+  #    "/tournEntrants.jsp",
+  #    "/tournGames.jsp",
+  #    "/tournInfo.jsp",
+  #    "/tournList.jsp"
+  # )
+
 =item $class->mk_accessors( $path )
 
 =item $class->mk_accessors( @paths )
 
 Creates the accessor method for a scraper which can C<scrape> C<$path>.
+C<$path> must be included by C<< $class->known_paths >>.
 You can also create multiple accessors in one C<mk_accessors> call.
 
   use parent 'WWW::GoKGS';
