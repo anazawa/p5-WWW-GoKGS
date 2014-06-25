@@ -14,7 +14,7 @@ use WWW::GoKGS::Scraper::TournGames;
 use WWW::GoKGS::Scraper::TournInfo;
 use WWW::GoKGS::Scraper::TournList;
 
-our $VERSION = '0.13';
+our $VERSION = '0.14';
 
 __PACKAGE__->mk_accessors(
     '/gameArchives.jsp',
@@ -495,7 +495,7 @@ C</tournGames.jsp>. Defaults to a L<WWW::GoKGS::Scraper::TournGames> object.
 
 =item $bool = $gokgs->can_scrape( '/fooBar.jsp' )
 
-=item $bool = $gokgs->can_scrape( 'http://www.gogks.com/fooBar.jsp' )
+=item $bool = $gokgs->can_scrape( 'http://www.gokgs.com/fooBar.jsp' )
 
 Returns a Boolean value telling whether C<$gokgs> can C<scrape> the resource
 specified by the given path.
@@ -624,7 +624,7 @@ You can add a new path by subclassing or sending a patch to the module author.
   #    "/graphPage.jsp",
   #    "/gameArchives.jsp",
   #    "/plusSchedule.jsp",
-  #    "/top100.jsp,
+  #    "/top100.jsp",
   #    "/tournEntrants.jsp",
   #    "/tournGames.jsp",
   #    "/tournInfo.jsp",
