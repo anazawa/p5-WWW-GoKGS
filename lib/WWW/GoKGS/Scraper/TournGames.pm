@@ -7,8 +7,23 @@ use Web::Scraper;
 use WWW::GoKGS::Scraper::Filters qw/datetime/;
 use WWW::GoKGS::Scraper::TournLinks qw/process_links/;
 
+sub init {
+    my ( $self, $args ) = @_;
+
+    $self->SUPER::init( $args );
+
+    $self->add_filter(
+        'games[].start_time' => \&datetime,
+        'links.rounds[].start_time' => \&datetime,
+        'links.rounds[].end_time'   => \&datetime,
+    );
+
+    return;
+}
+
 sub _build_base_uri {
-    URI->new('http://www.gokgs.com/tournGames.jsp');
+    my $self = shift;
+    URI->new( 'http://www.gokgs.com/tournGames.jsp' );
 }
 
 sub _build_scraper {
@@ -61,15 +76,6 @@ sub _build_scraper {
     };
 }
 
-sub _build_filter {
-    my $self = shift;
-
-    {
-        'games[].start_time' => [ \&datetime ],
-        'links.rounds[].start_time' => [ \&datetime ],
-        'links.rounds[].end_time'   => [ \&datetime ],
-    };
-}
 
 sub _assoc_filter {
     my ( $self, $key ) = @_;

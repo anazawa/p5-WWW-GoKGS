@@ -6,8 +6,21 @@ use URI;
 use Web::Scraper;
 use WWW::GoKGS::Scraper::Filters qw/datetime/;
 
+sub init {
+    my ( $self, $args ) = @_;
+
+    $self->SUPER::init( $args );
+
+    $self->add_filter(
+        'games[].start_time' => \&datetime,
+    );
+
+    return;
+}
+
 sub _build_base_uri {
-    URI->new('http://www.gokgs.com/gameArchives.jsp');
+    my $self = shift;
+    URI->new( 'http://www.gokgs.com/gameArchives.jsp' );
 }
 
 sub _build_scraper {
@@ -52,14 +65,6 @@ sub _build_scraper {
         process '//a[contains(@href, ".tar.gz")]', 'tgz_uri' => '@href';
         process '//table[descendant::tr/th/text()="Year"]//following-sibling::tr',
                 'calendar[]' => $calendar;
-    };
-}
-
-sub _build_filter {
-    my $self = shift;
-
-    {
-        'games[].start_time' => [ \&datetime ],
     };
 }
 

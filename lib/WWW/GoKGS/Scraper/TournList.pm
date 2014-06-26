@@ -6,7 +6,8 @@ use URI;
 use Web::Scraper;
 
 sub _build_base_uri {
-    URI->new('http://www.gokgs.com/tournList.jsp');
+    my $self = shift;
+    URI->new( 'http://www.gokgs.com/tournList.jsp' );
 }
 
 sub _build_scraper {

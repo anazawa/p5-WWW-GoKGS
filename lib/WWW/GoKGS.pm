@@ -485,20 +485,13 @@ C</tournGames.jsp>. Defaults to a L<WWW::GoKGS::Scraper::TournGames> object.
 
 Can be used to get or set your email address which is used to send
 the From request header that indicates who is making the request.
-A shortcut for:
-
-  my $email_address = $gokgs->user_agent->default_header( 'From' );
-  $gokgs->user_agent->default_header( 'From' => 'user@example.com' );
 
 =item $agent = $gokgs->agent
 
 =item $gokgs->agent( 'MyAgent/0.01' )
 
 Can be used to get or set the product token that is used to send
-the User-Agent request header. A shortcut for:
-
-  my $agent = $gokgs->user_agent->agent;
-  $gokgs->user_agent->agent( 'MyAgent/0.01' )
+the User-Agent request header.
 
 =item $bool = $gokgs->can_scrape( '/fooBar.jsp' )
 

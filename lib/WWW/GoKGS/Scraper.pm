@@ -7,12 +7,21 @@ use Web::Scraper qw//;
 sub new {
     my $class = shift;
     my %args = @_ == 1 ? %{$_[0]} : @_;
-    my $user_agent = delete $args{user_agent};
-    my $self = bless { %args }, $class;
+    my $self = bless {}, $class;
 
-    $self->user_agent( $user_agent ) if $user_agent;
+    for my $key (qw/base_uri/) {
+        $self->{$key} = $args{$key} if exists $args{$key};
+    }
+
+    $self->init( \%args );
 
     $self;
+}
+
+sub init {
+    my ( $self, $args ) = @_;
+    $self->user_agent( $args->{user_agent} ) if exists $args->{user_agent};
+    return;
 }
 
 sub base_uri {
@@ -54,26 +63,23 @@ sub query {
     });
 }
 
-sub _filter {
-    my $self = shift;
-    $self->{filter} ||= $self->_build_filter;
+sub _filters {
+    $_[0]->{filters} ||= {};
 }
-
-sub _build_filter { +{} }
 
 sub get_filter {
     my ( $self, $key ) = @_;
-    @{ $self->_filter->{$key} || [] };
+    @{ $self->_filters->{$key} || [] };
 }
 
 sub add_filter {
     my ( $self, @pairs ) = @_;
-    my $filter = $self->_filter;
+    my $filters = $self->_filters;
 
     croak "Odd number of arguments passed to 'add_filter'" if @pairs % 2;
 
     while ( my ($key, $value) = splice @pairs, 0, 2 ) {
-        push @{ $filter->{$key} ||= [] }, $value;
+        push @{ $filters->{$key} ||= [] }, $value;
     }
 
     return;
