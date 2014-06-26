@@ -162,18 +162,26 @@ sub make_accessor {
 sub new {
     my $class = shift;
     my %args = @_ == 1 ? %{$_[0]} : @_;
-    my ( $agent, $from ) = delete @args{qw/agent from/};
-    my $self = bless { %args }, $class;
+    my $self = bless {}, $class;
 
-    if ( exists $self->{user_agent} ) {
-        $self->agent( $agent ) if defined $agent;
-        $self->from( $from ) if defined $from;
+    for my $key (qw/user_agent date_filter html_filter/) {
+        $self->{$key} = $args{$key} if exists $args{$key};
     }
-    else {
+
+    $self->init( \%args );
+
+    $self;
+}
+
+sub init {
+    my ( $self, $args ) = @_;
+    my $class = ref $self;
+
+    unless ( exists $self->{user_agent} ) {
         $self->user_agent(
             LWP::RobotUA->new(
-                agent => $agent || sprintf( '%s/%s', $class, $self->VERSION ),
-                from => $from,
+                agent => $args->{agent} || "$class/" . $class->VERSION,
+                from => $args->{from},
             )
         );
     }
@@ -186,7 +194,7 @@ sub new {
         $self->$accessor( $self->$builder );
     }
 
-    $self;
+    return;
 }
 
 sub user_agent {
@@ -391,28 +399,6 @@ L<LWP::UserAgent> as follows:
 NOTE: You should set a delay between requests to avoid overloading
 the KGS server.
 
-=item $email_address = $gokgs->from
-
-=item $gokgs->from( 'user@example.com' )
-
-Can be used to get or set your email address which is used 
-by C<< $gokgs->user_agent >> to send the From request header
-that indicates who is making the request. This attribute must be defined
-when you use L<LWP::RobotUA>.
-
-  my $gokgs = WWW::GoKGS->new(
-      from => 'user@example.com'
-  );
-
-=item $product_id = $gokgs->agent
-
-=item $gokgs->agent( 'MyAgent/0.01' )
-
-Can be used to get or set the product token that is used by
-C<< $gokgs->user_agent >> to send the User-Agent request header.
-Defaults to C<WWW::GoKGS/#.##>, where C<#.##> is substituted with
-the version number of this module.
-
 =item $CodeRef = $gokgs->html_filter
 
 =item $gokgs->html_filter( sub { my $html = shift; ... } )
@@ -492,6 +478,27 @@ C</tournGames.jsp>. Defaults to a L<WWW::GoKGS::Scraper::TournGames> object.
 =head2 INSTANCE METHODS
 
 =over 4
+
+=item $email_address = $gokgs->from
+
+=item $gokgs->from( 'user@example.com' )
+
+Can be used to get or set your email address which is used to send
+the From request header that indicates who is making the request.
+A shortcut for:
+
+  my $email_address = $gokgs->user_agent->default_header( 'From' );
+  $gokgs->user_agent->default_header( 'From' => 'user@example.com' );
+
+=item $agent = $gokgs->agent
+
+=item $gokgs->agent( 'MyAgent/0.01' )
+
+Can be used to get or set the product token that is used to send
+the User-Agent request header. A shortcut for:
+
+  my $agent = $gokgs->user_agent->agent;
+  $gokgs->user_agent->agent( 'MyAgent/0.01' )
 
 =item $bool = $gokgs->can_scrape( '/fooBar.jsp' )
 
