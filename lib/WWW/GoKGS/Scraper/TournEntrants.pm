@@ -2,28 +2,11 @@ package WWW::GoKGS::Scraper::TournEntrants;
 use strict;
 use warnings;
 use parent qw/WWW::GoKGS::Scraper/;
-use URI;
 use Web::Scraper;
 use WWW::GoKGS::Scraper::Filters qw/datetime/;
 use WWW::GoKGS::Scraper::TournLinks qw/process_links/;
 
-sub init {
-    my ( $self, $args ) = @_;
-
-    $self->SUPER::init( $args );
-
-    $self->add_filter(
-        'links.rounds[].start_time' => \&datetime,
-        'links.rounds[].end_time'   => \&datetime,
-    );
-
-    return;
-}
-
-sub _build_base_uri {
-    my $self = shift;
-    URI->new( 'http://www.gokgs.com/tournEntrants.jsp' );
-}
+sub base_uri { 'http://www.gokgs.com/tournEntrants.jsp' }
 
 sub _build_scraper {
     my $self = shift;
@@ -50,14 +33,8 @@ sub _build_scraper {
                 'entrants[]' => scraper { # Round Robin
                     process '//td', 'columns[]' => 'TEXT';
                     result 'columns'; };
-        process_links $self->_assoc_filter('links.rounds[].start_time'),
-                      $self->_assoc_filter('links.rounds[].end_time');
+        process_links;
     };
-}
-
-sub _assoc_filter {
-    my ( $self, $key ) = @_;
-    ( $key, [ $self->get_filter($key) ] );
 }
 
 sub scrape {

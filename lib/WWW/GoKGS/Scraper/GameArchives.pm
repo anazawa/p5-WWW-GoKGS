@@ -2,26 +2,10 @@ package WWW::GoKGS::Scraper::GameArchives;
 use strict;
 use warnings FATAL => 'all';
 use parent qw/WWW::GoKGS::Scraper/;
-use URI;
 use Web::Scraper;
 use WWW::GoKGS::Scraper::Filters qw/datetime/;
 
-sub init {
-    my ( $self, $args ) = @_;
-
-    $self->SUPER::init( $args );
-
-    $self->add_filter(
-        'games[].start_time' => \&datetime,
-    );
-
-    return;
-}
-
-sub _build_base_uri {
-    my $self = shift;
-    URI->new( 'http://www.gokgs.com/gameArchives.jsp' );
-}
+sub base_uri { 'http://www.gokgs.com/gameArchives.jsp' }
 
 sub _build_scraper {
     my $self = shift;
@@ -128,7 +112,7 @@ sub scrape {
         $game->{setup}      = $game->{maybe_setup};
     }
     continue {
-        $game->{start_time} = $self->run_filter( 'games[].start_time', $game->{start_time} );
+        $game->{start_time} = datetime( $game->{start_time} );
         $game->{result}     = $canonical_result{$game->{result}} || $game->{result};
         $game->{setup}      =~ /^(\d+)\x{d7}\d+ (?:H(\d+))?$/;
         $game->{board_size} = int $1;

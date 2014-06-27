@@ -2,12 +2,9 @@ package WWW::GoKGS::Scraper::Top100;
 use strict;
 use warnings FATAL => 'all';
 use parent qw/WWW::GoKGS::Scraper/;
-use URI;
 use Web::Scraper;
 
-sub _build_base_uri {
-    URI->new('http://www.gokgs.com/top100.jsp');
-}
+sub base_uri { 'http://www.gokgs.com/top100.jsp' }
 
 sub _build_scraper {
     my $self = shift;

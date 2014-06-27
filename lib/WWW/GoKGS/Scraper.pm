@@ -2,16 +2,23 @@ package WWW::GoKGS::Scraper;
 use strict;
 use warnings;
 use Carp qw/croak/;
-use Web::Scraper qw//;
+use URI;
+
+sub base_uri {
+    croak 'call to abstract method ', __PACKAGE__, '::base_uri';
+}
+
+sub build_uri {
+    my ( $class, @args ) = @_;
+    my $uri = URI->new( $class->base_uri );
+    $uri->query_form( @args ) if @args;
+    $uri;
+}
 
 sub new {
     my $class = shift;
     my %args = @_ == 1 ? %{$_[0]} : @_;
     my $self = bless {}, $class;
-
-    for my $key (qw/base_uri/) {
-        $self->{$key} = $args{$key} if exists $args{$key};
-    }
 
     $self->init( \%args );
 
@@ -20,18 +27,10 @@ sub new {
 
 sub init {
     my ( $self, $args ) = @_;
+
     $self->user_agent( $args->{user_agent} ) if exists $args->{user_agent};
+
     return;
-}
-
-sub base_uri {
-    my $self = shift;
-    return $self->{base_uri} if exists $self->{base_uri};
-    $self->{base_uri} = $self->_build_base_uri;
-}
-
-sub _build_base_uri {
-    croak 'call to abstract method ', __PACKAGE__, '::_build_base_uri';
 }
 
 sub _scraper {
@@ -55,44 +54,7 @@ sub scrape {
 
 sub query {
     my ( $self, @args ) = @_;
-
-    $self->scrape(do {
-        my $uri = $self->base_uri->clone;
-        $uri->query_form( @args );
-        $uri;
-    });
-}
-
-sub _filters {
-    $_[0]->{filters} ||= {};
-}
-
-sub get_filter {
-    my ( $self, $key ) = @_;
-    @{ $self->_filters->{$key} || [] };
-}
-
-sub add_filter {
-    my ( $self, @pairs ) = @_;
-    my $filters = $self->_filters;
-
-    croak "Odd number of arguments passed to 'add_filter'" if @pairs % 2;
-
-    while ( my ($key, $value) = splice @pairs, 0, 2 ) {
-        push @{ $filters->{$key} ||= [] }, $value;
-    }
-
-    return;
-}
-
-sub run_filter {
-    my ( $self, $key, $value ) = @_;
-
-    for my $filter ( $self->get_filter($key) ) {
-        $value = Web::Scraper::run_filter( $value, $filter );
-    }
-
-    $value;
+    $self->scrape( ref($self)->build_uri(@args) );
 }
 
 1;

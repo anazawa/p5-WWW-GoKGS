@@ -25,7 +25,7 @@ package main;
 
 throws_ok {
     My::WWW::GoKGS->mk_accessors( '/fooBar.jsp' );
-} qr{^Unknown path: /fooBar\.jsp};
+} qr{^Unknown path '/fooBar\.jsp' passed to 'mk_accessors'};
 
 my $gokgs = My::WWW::GoKGS->new(
     from => 'user@example.com',

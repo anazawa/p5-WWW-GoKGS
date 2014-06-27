@@ -2,13 +2,9 @@ package WWW::GoKGS::Scraper::TournList;
 use strict;
 use warnings FATAL => 'all';
 use parent qw/WWW::GoKGS::Scraper/;
-use URI;
 use Web::Scraper;
 
-sub _build_base_uri {
-    my $self = shift;
-    URI->new( 'http://www.gokgs.com/tournList.jsp' );
-}
+sub base_uri { 'http://www.gokgs.com/tournList.jsp' }
 
 sub _build_scraper {
     my $self = shift;

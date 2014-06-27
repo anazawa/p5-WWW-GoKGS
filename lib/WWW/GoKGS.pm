@@ -7,99 +7,53 @@ use LWP::RobotUA;
 use Scalar::Util qw/blessed/;
 use String::CamelCase qw/decamelize/;
 use URI;
-use WWW::GoKGS::Scraper::GameArchives;
-use WWW::GoKGS::Scraper::Top100;
-use WWW::GoKGS::Scraper::TournEntrants;
-use WWW::GoKGS::Scraper::TournGames;
-use WWW::GoKGS::Scraper::TournInfo;
-use WWW::GoKGS::Scraper::TournList;
 
 our $VERSION = '0.14';
 
-__PACKAGE__->mk_accessors(
-    '/gameArchives.jsp',
-    '/top100.jsp',
-    '/tournList.jsp',
-    '/tournInfo.jsp',
-    '/tournEntrants.jsp',
-    '/tournGames.jsp',
+__PACKAGE__->load_scrapers(
+    'GameArchives',
+    'Top100',
+    'TournList',
+    'TournInfo',
+    'TournEntrants',
+    'TournGames',
 );
 
-sub _build_game_archives {
-    my $self = shift;
+sub load_scrapers {
+    my ( $class, @scrapers ) = @_;
+    my $prefix = 'WWW::GoKGS::Scraper';
 
-    my $game_archives = WWW::GoKGS::Scraper::GameArchives->new(
-        user_agent => $self->user_agent,
-    );
+    while ( @scrapers ) {
+        my $scraper_class = shift @scrapers;
+        my $args = ref $scrapers[0] eq 'HASH' ? shift @scrapers : {};
 
-    $game_archives->add_filter(
-        'games[].start_time' => $self->wrapped_date_filter,
-    );
+        unless ( $scraper_class =~ s/^\+// or $scraper_class =~ /^$prefix/ ) {
+            $scraper_class = "$prefix\::$scraper_class";
+        }
 
-    $game_archives;
-}
+        my $file = $scraper_class;
+           $file =~ s{::}{/}g;
+           $file = "$file.pm";
 
-sub _build_top_100 {
-    my $self = shift;
+        require $file;
 
-    WWW::GoKGS::Scraper::Top100->new(
-        user_agent => $self->user_agent,
-    );
-}
+        croak "$scraper_class must inherit from WWW::GoKGS::Scraper"
+            unless $scraper_class->isa( 'WWW::GoKGS::Scraper' );
 
-sub _build_tourn_list {
-    my $self = shift;
+        $class->mk_accessors(
+            $scraper_class->build_uri->path,
+            sub {
+                my $self = shift;
 
-    WWW::GoKGS::Scraper::TournList->new(
-        user_agent => $self->user_agent,
-    );
-}
+                $scraper_class->new(
+                    user_agent => $self->user_agent,
+                    %$args,
+                );
+            },
+        );
+    }
 
-sub _build_tourn_info {
-    my $self = shift;
-
-    my $tourn_info = WWW::GoKGS::Scraper::TournInfo->new(
-        user_agent => $self->user_agent,
-    );
-
-    $tourn_info->add_filter(
-        'description' => $self->wrapped_html_filter,
-        'links.rounds[].start_time' => $self->wrapped_date_filter,
-        'links.rounds[].end_time'   => $self->wrapped_date_filter,
-    );
-
-    $tourn_info;
-}
-
-sub _build_tourn_entrants {
-    my $self = shift;
-
-    my $tourn_entrants = WWW::GoKGS::Scraper::TournEntrants->new(
-        user_agent => $self->user_agent,
-    );
-
-    $tourn_entrants->add_filter(
-        'links.rounds[].start_time' => $self->wrapped_date_filter,
-        'links.rounds[].end_time'   => $self->wrapped_date_filter,
-    );
-
-    $tourn_entrants;
-}
-
-sub _build_tourn_games {
-    my $self = shift;
-
-    my $tourn_games = WWW::GoKGS::Scraper::TournGames->new(
-        user_agent => $self->user_agent,
-    );
-
-    $tourn_games->add_filter(
-        'games[].start_time' => $self->wrapped_date_filter,
-        'links.rounds[].start_time' => $self->wrapped_date_filter,
-        'links.rounds[].end_time'   => $self->wrapped_date_filter,
-    );
-
-    $tourn_games;
+    return;
 }
 
 sub known_paths {
@@ -121,16 +75,32 @@ sub mk_accessors {
     my ( $class, @paths ) = @_;
     my %is_known = map { $_ => 1 } $class->known_paths;
 
-    for my $path ( @paths ) {
-        my $method = "$class\::" . $class->accessor_name_for( $path );
-        my $body = $class->make_accessor( $path );
-        croak "Unknown path: $path" unless $is_known{$path};
-        next if defined &$method;
-        no strict 'refs';
-        *$method = $body;
+    while ( @paths ) {
+        my $path = shift @paths;
+        my $builder = ref $paths[0] eq 'CODE' && shift @paths;
+        my $builder_name = $class->builder_name_for( $path );
+        my $accessor = $class->make_accessor( $path );
+        my $accessor_name = $class->accessor_name_for( $path );
+
+        croak "Unknown path '$path' passed to 'mk_accessors'"
+            unless $is_known{ $path };
+
+        croak "$class is missing '$builder_name' method"
+            unless $builder or $class->can( $builder_name );
+
+        $class->_add_method( $accessor_name => $accessor );
+        $class->_add_method( $builder_name => $builder ) if $builder;
     }
 
     return;
+}
+
+sub _add_method {
+    my ( $class, $name, $body ) = @_;
+    my $method = "$class\::$name";
+    return if defined &$method;
+    no strict 'refs';
+    *$method = $body;
 }
 
 sub accessor_name_for {
@@ -164,7 +134,7 @@ sub new {
     my %args = @_ == 1 ? %{$_[0]} : @_;
     my $self = bless {}, $class;
 
-    for my $key (qw/user_agent date_filter html_filter/) {
+    for my $key (qw/user_agent/) {
         $self->{$key} = $args{$key} if exists $args{$key};
     }
 
@@ -211,28 +181,6 @@ sub agent {
 sub from {
     my ( $self, @args ) = @_;
     $self->user_agent->default_header( 'From', @args );
-}
-
-sub date_filter {
-    my $self = shift;
-    $self->{date_filter} = shift if @_;
-    $self->{date_filter} ||= sub { $_[0] };
-}
-
-sub html_filter {
-    my $self = shift;
-    $self->{html_filter} = shift if @_;
-    $self->{html_filter} ||= sub { $_[0] };
-}
-
-sub wrapped_date_filter {
-    my $self = shift;
-    sub { $self->date_filter->(@_) };
-}
-
-sub wrapped_html_filter {
-    my $self = shift;
-    sub { $self->html_filter->(@_) };
 }
 
 sub _scrapers {
