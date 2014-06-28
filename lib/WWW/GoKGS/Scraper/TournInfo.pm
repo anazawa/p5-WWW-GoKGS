@@ -19,6 +19,18 @@ sub _build_scraper {
     };
 }
 
+sub scrape {
+    my ( $self, @args ) = @_;
+    my $result = $self->SUPER::scrape( @args );
+
+    if ( exists $result->{description} ) {
+        $result->{description} = join q{}, @{$result->{description}};
+    }
+
+    return;
+
+}
+
 1;
 
 __END__

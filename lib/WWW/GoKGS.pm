@@ -10,122 +10,52 @@ use URI;
 
 our $VERSION = '0.14';
 
-__PACKAGE__->load_scrapers(
-    'GameArchives',
-    'Top100',
-    'TournList',
-    'TournInfo',
-    'TournEntrants',
-    'TournGames',
-);
+BEGIN {
+    my @classes = qw(
+        WWW::GoKGS::Scraper::GameArchives
+        WWW::GoKGS::Scraper::Top100
+        WWW::GoKGS::Scraper::TournList
+        WWW::GoKGS::Scraper::TournInfo
+        WWW::GoKGS::Scraper::TournEntrants
+        WWW::GoKGS::Scraper::TournGames
+    );
 
-sub load_scrapers {
-    my ( $class, @scrapers ) = @_;
-    my $prefix = 'WWW::GoKGS::Scraper';
-
-    while ( @scrapers ) {
-        my $scraper_class = shift @scrapers;
-        my $args = ref $scrapers[0] eq 'HASH' ? shift @scrapers : {};
-
-        unless ( $scraper_class =~ s/^\+// or $scraper_class =~ /^$prefix/ ) {
-            $scraper_class = "$prefix\::$scraper_class";
-        }
-
-        my $file = $scraper_class;
+    my %paths;
+    for my $class ( @classes ) {
+        my $file = $class;
            $file =~ s{::}{/}g;
            $file = "$file.pm";
 
         require $file;
 
-        croak "$scraper_class must inherit from WWW::GoKGS::Scraper"
-            unless $scraper_class->isa( 'WWW::GoKGS::Scraper' );
+        my $path = $class->build_uri->path;
 
-        $class->mk_accessors(
-            $scraper_class->build_uri->path,
-            sub {
-                my $self = shift;
+        my $method = $path;
+           $method =~ s{^/}{};
+           $method =~ s{\.jsp$}{};
+           $method = $method eq 'top100' ? 'top_100' : decamelize $method;
 
-                $scraper_class->new(
-                    user_agent => $self->user_agent,
-                    %$args,
-                );
-            },
-        );
+        my $body = sub {
+            $_[0]->get_scraper( $path );
+        };
+
+        $paths{$class} = $path;
+
+        no strict 'refs';
+        *$method = $body;
     }
 
-    return;
-}
-
-sub known_paths {
-    my $class = shift;
-
-    qw(
-        /graphPage.jsp
-        /gameArchives.jsp
-        /plusSchedule.jsp
-        /top100.jsp
-        /tournEntrants.jsp
-        /tournGames.jsp
-        /tournInfo.jsp
-        /tournList.jsp
-    );
-}
-
-sub mk_accessors {
-    my ( $class, @paths ) = @_;
-    my %is_known = map { $_ => 1 } $class->known_paths;
-
-    while ( @paths ) {
-        my $path = shift @paths;
-        my $builder = ref $paths[0] eq 'CODE' && shift @paths;
-        my $builder_name = $class->builder_name_for( $path );
-        my $accessor = $class->make_accessor( $path );
-        my $accessor_name = $class->accessor_name_for( $path );
-
-        croak "Unknown path '$path' passed to 'mk_accessors'"
-            unless $is_known{ $path };
-
-        croak "$class is missing '$builder_name' method"
-            unless $builder or $class->can( $builder_name );
-
-        $class->_add_method( $accessor_name => $accessor );
-        $class->_add_method( $builder_name => $builder ) if $builder;
-    }
-
-    return;
-}
-
-sub _add_method {
-    my ( $class, $name, $body ) = @_;
-    my $method = "$class\::$name";
-    return if defined &$method;
-    no strict 'refs';
-    *$method = $body;
-}
-
-sub accessor_name_for {
-    my ( $class, $path ) = @_;
-    my $name = $path;
-    $name =~ s{^/}{};
-    $name =~ s{\.jsp$}{};
-    $name = $name eq 'top100' ? 'top_100' : decamelize $name;
-    $name;
-}
-
-sub builder_name_for {
-    my ( $class, $path ) = @_;
-    my $name = $class->accessor_name_for( $path );
-    $name = "_build_$name";
-    $name;
-}
-
-sub make_accessor {
-    my ( $class, $path ) = @_;
-
-    sub {
+    *__build_scrapers = sub {
         my $self = shift;
-        return $self->get_scraper( $path ) unless @_;
-        $self->set_scraper( $path => shift );
+
+        my %scrapers;
+        while ( my ($class, $path) = each %paths ) {
+            $scrapers{$path} = $class->new(
+                user_agent => $self->user_agent,
+            );
+        }
+
+        \%scrapers;
     };
 }
 
@@ -145,23 +75,16 @@ sub new {
 
 sub init {
     my ( $self, $args ) = @_;
-    my $class = ref $self;
 
     unless ( exists $self->{user_agent} ) {
+        my $class = ref $self;
+
         $self->user_agent(
             LWP::RobotUA->new(
                 agent => $args->{agent} || "$class/" . $class->VERSION,
                 from => $args->{from},
             )
         );
-    }
-
-    # initialize scrapers
-    for my $path ( $class->known_paths ) {
-        my $accessor = $class->accessor_name_for( $path );
-        my $builder = $class->builder_name_for( $path );
-        next unless $self->can( $accessor ) and $self->can( $builder );
-        $self->$accessor( $self->$builder );
     }
 
     return;
@@ -184,27 +107,13 @@ sub from {
 }
 
 sub _scrapers {
-    $_[0]->{_scrapers} ||= {};
+    my $self = shift;
+    $self->{_scrapers} ||= $self->__build_scrapers;
 }
 
 sub get_scraper {
     my ( $self, $path ) = @_;
     $self->_scrapers->{$path};
-}
-
-sub set_scraper {
-    my ( $self, @pairs ) = @_;
-    my $scrapers = $self->_scrapers;
-
-    croak "Odd number of arguments passed to 'set_scraper'" if @pairs % 2;
-
-    while ( my ($path, $scraper) = splice @pairs, 0, 2 ) {
-        croak "$scraper ($path scraper) is missing 'scrape' method"
-            unless blessed $scraper and $scraper->can('scrape');
-        $scrapers->{$path} = $scraper;
-    }
-
-    return;
 }
 
 sub each_scraper {

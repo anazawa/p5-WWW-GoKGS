@@ -37,7 +37,6 @@ subtest 'WWW::GoKGS' => sub {
 
     can_ok $gokgs, qw(
         get_scraper
-        set_scraper
         each_scraper
         can_scrape
         scrape
@@ -54,14 +53,6 @@ subtest 'WWW::GoKGS' => sub {
         my ( $path, $scraper ) = @_;
         is $path, $scraper->build_uri->path;
     });
-
-    throws_ok {
-        $gokgs->set_scraper( '/fooBar.jsp' );
-    } qr{^Odd number of arguments passed to 'set_scraper'};
-
-    throws_ok {
-        $gokgs->set_scraper( '/fooBar.jsp' => 'FooBar' );
-    } qr{^FooBar \(/fooBar\.jsp scraper\) is missing 'scrape' method};
 
     throws_ok {
         my ( $path, $scraper ) = $gokgs->each_scraper;
