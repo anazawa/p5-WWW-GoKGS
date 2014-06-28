@@ -37,14 +37,26 @@ WWW::GoKGS::Scraper::Top100 - Top 100 KGS Players
 
 This class inherits from L<WWW::GoKGS::Scraper>.
 
-=head2 ATTRIBUTES
+=head2 CLASS METHODS
 
 =over 4
 
-=item $URI = $top_100->base_uri
+=item $uri = $class->base_uri
 
-Defaults to C<http://www.gokgs.com/top100.jsp>.
-This attribute is read-only.
+Returns a URI string. Defaults to C<http://www.gokgs.com/top100.jsp>.
+
+=item $URI = $class->build_uri
+
+Returns a L<URI> object created from C<base_uri>.
+
+  my $uri = WWW::GoKGS::Scraper::Top100->build_uri;
+  # => URI->new( "http://www.gokgs.com/top100.jsp" )
+
+=back
+
+=head2 INSTANCE METHODS
+
+=over 4
 
 =item $UserAgent = $top_100->user_agent
 
@@ -53,12 +65,6 @@ This attribute is read-only.
 Can be used to get or set an L<LWP::UserAgent> object which is used to
 C<GET> the requested resource. Defaults to the C<LWP::UserAgent> object
 shared by L<Web::Scraper> users (C<$Web::Scraper::UserAgent>).
-
-=back
-
-=head2 METHODS
-
-=over 4
 
 =item $HashRef = $top_100->query
 

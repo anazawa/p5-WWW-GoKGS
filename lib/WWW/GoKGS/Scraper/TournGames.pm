@@ -165,14 +165,28 @@ WWW::GoKGS::Scraper::TournGames - Games of the KGS tournament
 
 This class inherits from L<WWW::GoKGS::Scraper>.
 
-=head2 ATTRIBUTES
+=head2 CLASS METHODS
 
 =over 4
 
-=item $URI = $tuorn_games->base_uri
+=item $uri = $class->base_uri
 
-Defaults to C<http://www.gokgs.com/tournGames.jsp>.
-This attribute is read-only.
+  # => "http://www.gokgs.com/tournGames.jsp"
+
+=item $URI = $class->build_uri( $k1 => $v1, $k2 => $v2, ... )
+
+=item $URI = $class->build_uri({ $k1 => $v1, $k2 => $v2, ... })
+
+=item $URI = $class->build_uri([ $k1 => $v1, $k2 => $v2, ... ])
+
+Given key-value pairs of query parameters, constructs a L<URI> object
+which consists of C<base_uri> and the paramters.
+
+=back
+
+=head2 INSTANCE METHODS
+
+=over 4
 
 =item $UserAgent = $tourn_games->user_agent
 
@@ -181,32 +195,6 @@ This attribute is read-only.
 Can be used to get or set an L<LWP::UserAgent> object which is used to
 C<GET> the requested resource. Defaults to the C<LWP::UserAgent> object
 shared by L<Web::Scraper> users (C<$Web::Scraper::UserAgent>).
-
-=back
-
-=head2 METHODS
-
-=over 4
-
-=item $tourn_games->add_filter( 'games[].start_time' => $filter )
-
-=item $tourn_games->add_filter( 'links.rounds[].start_time' => $filter )
-
-=item $tourn_games->add_filter( 'links.rounds[].end_time' => $filter )
-
-Adds a game start time or a round start/end time filter.
-C<$filter> is called with a date string
-such as C<2014-05-17T19:05Z>. C<$filter> can be either a filter class name
-or a subref. See L<Web::Scraper::Filter> for details.
-
-  use Time::Piece qw/gmtime/;
-
-  $tourn_games->add_filter(
-      'games[].start_time' => sub {
-          my $start_time = shift; # => "2014-05-17T19:05Z"
-          gmtime->strptime( $start_time, '%Y-%m-%dT%H:%MZ' );
-      }
-  );
 
 =item $HashRef = $tourn_games->scrape( URI->new(...) )
 
