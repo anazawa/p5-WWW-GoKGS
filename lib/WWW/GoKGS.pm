@@ -14,7 +14,7 @@ use WWW::GoKGS::Scraper::TournGames;
 
 our $VERSION = '0.15';
 
-BEGIN {
+BEGIN { # install scrapers
     my %scrapers = (
         game_archives  => 'WWW::GoKGS::Scraper::GameArchives',
         top_100        => 'WWW::GoKGS::Scraper::Top100',
