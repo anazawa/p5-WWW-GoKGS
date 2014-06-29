@@ -41,7 +41,7 @@ sub _build_scraper {
         process '//td[3]', 'black' => [ 'TEXT', $player ];
         process '//td[3]', 'maybe_bye' => 'TEXT';
         process '//td[4]', 'setup' => 'TEXT';
-        process '//td[5]', 'start_time' => [ 'TEXT', $self->get_filter('games[].start_time') ];
+        process '//td[5]', 'start_time' => [ 'TEXT', \&datetime ];
         process '//td[6]', 'result' => [ 'TEXT', $result ];
     };
 
