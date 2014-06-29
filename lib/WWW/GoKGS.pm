@@ -6,7 +6,7 @@ use Carp qw/croak/;
 use LWP::RobotUA;
 use URI;
 
-our $VERSION = '0.14';
+our $VERSION = '0.15';
 
 BEGIN {
     my %isa = (

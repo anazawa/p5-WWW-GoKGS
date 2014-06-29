@@ -1,5 +1,7 @@
 Revision history for Perl extension WWW::GoKGS.
 
+0.15 Jun 29th, 2014
+
   [INCOMPATIBLE CHANGES]
 
     - Give up implementing incomplete filtering system.
