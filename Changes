@@ -38,6 +38,9 @@ Revision history for Perl extension WWW::GoKGS.
 
         * WWW::GoKGS#set_scraper
 
+    - Sorry for your inconvenience. I decided to commit the terrible changes
+      listed above to make this distribution maintainable.
+
 0.14 Jun 26th, 2014
 
   - Add the following instance methods:
