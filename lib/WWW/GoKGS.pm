@@ -12,7 +12,7 @@ use WWW::GoKGS::Scraper::TournInfo;
 use WWW::GoKGS::Scraper::TournEntrants;
 use WWW::GoKGS::Scraper::TournGames;
 
-our $VERSION = '0.15';
+our $VERSION = '0.16';
 
 BEGIN { # install scrapers
     my %scrapers = (
