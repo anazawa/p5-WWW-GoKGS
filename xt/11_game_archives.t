@@ -3,14 +3,15 @@ use warnings;
 use xt::Util qw/:cmp_deeply/;
 use Encode qw/decode_utf8/;
 use Test::Base;
-use WWW::GoKGS::Scraper::GameArchives;
+use WWW::GoKGS;
 
 spec_file 'xt/11_game_archives.spec';
 
 plan skip_all => 'AUTHOR_TESTING is required' unless $ENV{AUTHOR_TESTING};
 plan tests => 1 * blocks;
 
-my $game_archives = WWW::GoKGS::Scraper::GameArchives->new;
+my $gokgs = WWW::GoKGS->new( from => 'anazawa@cpan.org' );
+   $gokgs->user_agent->delay( 1/60 );
 
 my $expected = do {
     my %user = (
@@ -59,15 +60,15 @@ my $expected = do {
 
 run {
     my $block = shift;
-    my $got = $game_archives->scrape( $block->input );
+    my $got = $gokgs->game_archives->scrape( $block->input );
     is_deeply $got, $block->expected if defined $block->expected;
     cmp_deeply $got, $expected unless defined $block->expected;
 };
 
-sub query {
-    WWW::GoKGS::Scraper::GameArchives->build_uri( @_ );
+sub build_uri {
+    $gokgs->game_archives->build_uri( @_ );
 }
 
-sub add_base_uri {
-    ( @_, WWW::GoKGS::Scraper::GameArchives->build_uri );
+sub html {
+    ( @_, $gokgs->game_archives->build_uri );
 }

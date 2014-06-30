@@ -2,14 +2,15 @@ use strict;
 use warnings;
 use Test::Base;
 use Test::Deep;
-use WWW::GoKGS::Scraper::Top100;
+use WWW::GoKGS;
 
 spec_file 'xt/10_top_100.spec';
 
 plan skip_all => 'AUTHOR_TESTING is required' unless $ENV{AUTHOR_TESTING};
 plan tests => 1 * blocks;
 
-my $top_100 = WWW::GoKGS::Scraper::Top100->new;
+my $gokgs = WWW::GoKGS->new( from => 'anazawa@cpan.org' );
+   $gokgs->user_agent->delay( 1/60 );
 
 my $expected = {
    players => array_each({
@@ -22,11 +23,11 @@ my $expected = {
 
 run {
     my $block = shift;
-    my $got = $top_100->scrape( $block->input );
+    my $got = $gokgs->top_100->scrape( $block->input );
     is_deeply $got, $block->expected if defined $block->expected;
     cmp_deeply $got, $expected unless defined $block->expected;
 };
 
-sub add_base_uri {
-    ( @_, WWW::GoKGS::Scraper::Top100->build_uri );
+sub html {
+    ( @_, $gokgs->top_100->build_uri );
 }
