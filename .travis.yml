@@ -1,8 +1,6 @@
 language: perl
 script:
-  - "perl Build.PL"
-  - "./Build"
-  - "env AUTHOR_TESTING=1 ./Build test"
+  - "perl Build.PL; ./Build; env AUTHOR_TESTING=1 ./Build test"
 install:
   - "cpanm --with-recommends --installdeps --notest ."
 notifications:
