@@ -1,5 +1,7 @@
 language: perl
 script: "perl Build.PL; ./Build; env AUTHOR_TESTING=1 ./Build test"
+install:
+  - "cpanm --notest HTML::TreeBuilder::LibXML"
 notifications:
   email:
     - anazawa@cpan.org
