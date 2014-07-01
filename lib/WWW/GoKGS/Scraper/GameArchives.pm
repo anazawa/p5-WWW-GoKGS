@@ -3,7 +3,7 @@ use strict;
 use warnings FATAL => 'all';
 use parent qw/WWW::GoKGS::Scraper/;
 use Web::Scraper;
-use WWW::GoKGS::Scraper::Filters qw/datetime/;
+use WWW::GoKGS::Scraper::Filters qw/game_result datetime/;
 
 sub base_uri { 'http://www.gokgs.com/gameArchives.jsp' }
 
@@ -36,7 +36,8 @@ sub _build_scraper {
 
     my $calendar = scraper {
         process 'td', 'year' => 'TEXT';
-        process qq{//following-sibling::td[text()!="\x{a0}"]},
+        #process qq{//following-sibling::td[\@colspan]},
+        process '//following-sibling::td[not(@colspan)]',
                 'month[]' => scraper {
                     process '.', 'month' => [ 'TEXT', $month2num ];
                     process 'a', 'uri' => '@href'; };
@@ -47,7 +48,7 @@ sub _build_scraper {
                 'games[]' => $game;
         process '//a[contains(@href, ".zip")]', 'zip_uri' => '@href';
         process '//a[contains(@href, ".tar.gz")]', 'tgz_uri' => '@href';
-        process '//table[descendant::tr/th/text()="Year"]//following-sibling::tr',
+        process '//table[colgroup]//following-sibling::tr',
                 'calendar[]' => $calendar;
     };
 }
@@ -74,15 +75,6 @@ sub scrape {
     }
 
     return $result unless $result->{games};
-
-    # use SGF-compatible format whenever possible
-    my %canonical_result = (
-        'W+Res.'  => 'W+Resign',
-        'B+Res.'  => 'B+Resign',
-        'W+Forf.' => 'W+Forfeit',
-        'B+Forf.' => 'B+Forfeit',
-        'Jigo'    => 'Draw',
-    );
 
     for my $game ( @{$result->{games}} ) {
         next if exists $game->{black};
@@ -113,7 +105,7 @@ sub scrape {
     }
     continue {
         $game->{start_time} = datetime( $game->{start_time} );
-        $game->{result}     = $canonical_result{$game->{result}} || $game->{result};
+        $game->{result}     = game_result( $game->{result} );
         $game->{setup}      =~ /^(\d+)\x{d7}\d+ (?:H(\d+))?$/;
         $game->{board_size} = int $1;
         $game->{handicap}   = int $2 if $2;
