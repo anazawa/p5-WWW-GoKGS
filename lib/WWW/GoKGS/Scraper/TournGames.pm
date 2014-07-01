@@ -2,7 +2,7 @@ package WWW::GoKGS::Scraper::TournGames;
 use strict;
 use warnings FATAL => 'all';
 use parent qw/WWW::GoKGS::Scraper/;
-use Web::Scraper;
+use WWW::GoKGS::Scraper::Declare;
 use WWW::GoKGS::Scraper::Filters qw/datetime game_result/;
 use WWW::GoKGS::Scraper::TournLinks qw/process_links/;
 

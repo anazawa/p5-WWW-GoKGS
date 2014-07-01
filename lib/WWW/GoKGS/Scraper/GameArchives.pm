@@ -2,7 +2,7 @@ package WWW::GoKGS::Scraper::GameArchives;
 use strict;
 use warnings FATAL => 'all';
 use parent qw/WWW::GoKGS::Scraper/;
-use Web::Scraper;
+use WWW::GoKGS::Scraper::Declare;
 use WWW::GoKGS::Scraper::Filters qw/game_result datetime/;
 
 sub base_uri { 'http://www.gokgs.com/gameArchives.jsp' }
@@ -36,7 +36,6 @@ sub _build_scraper {
 
     my $calendar = scraper {
         process 'td', 'year' => 'TEXT';
-        #process qq{//following-sibling::td[\@colspan]},
         process '//following-sibling::td[not(@colspan)]',
                 'month[]' => scraper {
                     process '.', 'month' => [ 'TEXT', $month2num ];

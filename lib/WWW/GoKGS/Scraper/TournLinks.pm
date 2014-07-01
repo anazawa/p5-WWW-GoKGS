@@ -2,7 +2,7 @@ package WWW::GoKGS::Scraper::TournLinks;
 use strict;
 use warnings FATAL => 'all';
 use Exporter qw/import/;
-use Web::Scraper;
+use WWW::GoKGS::Scraper::Declare;
 use WWW::GoKGS::Scraper::Filters qw/datetime/;
 
 our @EXPORT_OK = qw( process_links );
