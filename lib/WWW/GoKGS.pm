@@ -388,6 +388,16 @@ on KGS and the scraper object which can scrape the resource.
 
 =over 4
 
+=item WWW_GOKGS_LIBXML
+
+If set to true, this module uses L<HTML::TreeBuilder::LibXML>
+instead of L<HTML::TreeBuilder> to parse HTML documents.
+Make sure to install the alternative module in addition to this module
+before you enable the flag.
+
+  BEGIN { $ENV{WWW_GOKGS_LIBXML} = 1 }
+  use WWW::GoKGS;
+
 =item AUTHOR_TESTING
 
 Some tests for scrapers send HTTP requests to C<GET> resources on KGS.

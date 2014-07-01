@@ -1,11 +1,13 @@
 language: perl
-script: "perl Build.PL; ./Build; env AUTHOR_TESTING=1 ./Build test"
+script:
+  - "perl Build.PL"
+  - "./Build"
+  - "env AUTHOR_TESTING=1 ./Build test"
 install:
-  - "cpanm --notest HTML::TreeBuilder::LibXML"
+  - "cpanm --with-recommends --installdeps --notest ."
 notifications:
   email:
     - anazawa@cpan.org
 branches:
   only:
     - master
-
