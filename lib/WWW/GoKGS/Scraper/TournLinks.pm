@@ -5,11 +5,12 @@ use Exporter qw/import/;
 use WWW::GoKGS::Scraper::Declare;
 use WWW::GoKGS::Scraper::Filters qw/datetime/;
 
-our @EXPORT_OK = qw( process_links );
+our @EXPORT = qw( _build_tourn_links );
 
-sub process_links {
-    my %filter = @_;
-    my $round = sub { m/^Round (\d+) / ? int $1 : undef };
+sub _build_tourn_links {
+    my $self = shift;
+
+    my $round = sub { m/^Round (\d+) / && $1 };
 
     my @start_time = (
         sub {
@@ -30,13 +31,11 @@ sub process_links {
         \&datetime,
     );
 
-    process '//div[@class="tournData"]', 'links' => scraper {
-        process '//ul[1]//li',
-                'entrants[]' => scraper {
+    scraper {
+        process '//ul[1]//li', 'entrants[]' => scraper {
                     process 'a', 'sort_by' => [ 'TEXT', sub { s/^By // } ];
                     process 'a', 'uri' => '@href'; };
-        process '//ul[2]//li',
-                'rounds[]' => scraper {
+        process '//ul[2]//li', 'rounds[]' => scraper {
                     process '.', 'round' => [ 'TEXT', $round ];
                     process '.', 'start_time' => [ 'TEXT', @start_time ];
                     process 'a', 'end_time' => [ 'TEXT', @end_time ];

@@ -9,9 +9,9 @@ sub base_uri {
 }
 
 sub build_uri {
-    my ( $class, @args ) = @_;
+    my ( $class, @query ) = @_;
     my $uri = URI->new( $class->base_uri );
-    $uri->query_form( @args ) if @args;
+    $uri->query_form( @query ) if @query;
     $uri;
 }
 
@@ -35,7 +35,7 @@ sub init {
 
 sub _scraper {
     my $self = shift;
-    $self->{scraper} ||= $self->_build_scraper;
+    $self->{_scraper} ||= $self->_build_scraper;
 }
 
 sub _build_scraper {

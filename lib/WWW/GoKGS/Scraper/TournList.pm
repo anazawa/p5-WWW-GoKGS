@@ -9,21 +9,15 @@ sub base_uri { 'http://www.gokgs.com/tournList.jsp' }
 sub _build_scraper {
     my $self = shift;
 
-    my %tournament = (
-        name => 'TEXT',
-        uri  => '@href',
-    );
-
-    my %year_index = (
-        year => 'TEXT',
-        uri  => '@href',
-    );
-
     scraper {
         process '//a[starts-with(@href, "tournInfo.jsp")]',
-                'tournaments[]' => \%tournament;
+                'tournaments[]' => {
+                    name => 'TEXT',
+                    uri => '@href' };
         process '//a[starts-with(@href, "tournList.jsp")]',
-                'year_index[]' => \%year_index;
+                'year_index[]' => {
+                    year => 'TEXT',
+                    uri  => '@href' };
         process '//p[preceding-sibling::h2/text()="Year Index"]',
                 '_years' => 'TEXT';
     };

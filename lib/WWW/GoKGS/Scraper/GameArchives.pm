@@ -18,14 +18,14 @@ sub _build_scraper {
 
     my %user = (
         name => [ 'TEXT', sub { s/ \[[^\]]+\]$// } ],
-        rank => [ 'TEXT', sub { m/ \[([^\]]+)\]$/ ? $1 : undef } ],
+        rank => [ 'TEXT', sub { m/ \[([^\]]+)\]$/ && $1 } ],
         uri  => '@href',
     );
 
     my $game = scraper {
-        process '//a[contains(@href, ".sgf")]', 'sgf_uri' => '@href';
-        process '//td[2]//a', 'white[]' => \%user;
-        process '//td[3]//a', 'black[]' => \%user;
+        process '//td[1]/a', 'sgf_uri' => '@href';
+        process '//td[2]/a', 'white[]' => \%user;
+        process '//td[3]/a', 'black[]' => \%user;
         process '//td[3]', 'maybe_setup' => 'TEXT';
         process '//td[4]', 'setup' => 'TEXT';
         process '//td[5]', 'start_time' => 'TEXT';

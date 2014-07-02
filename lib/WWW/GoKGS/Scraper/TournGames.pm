@@ -4,25 +4,26 @@ use warnings FATAL => 'all';
 use parent qw/WWW::GoKGS::Scraper/;
 use WWW::GoKGS::Scraper::Declare;
 use WWW::GoKGS::Scraper::Filters qw/datetime game_result/;
-use WWW::GoKGS::Scraper::TournLinks qw/process_links/;
+use WWW::GoKGS::Scraper::TournLinks;
 
 sub base_uri { 'http://www.gokgs.com/tournGames.jsp' }
 
 sub _build_scraper {
     my $self = shift;
-    my $name = sub { s/ Round \d+ Games$// };
-    my $round = sub { m/ Round (\d+) Games$/ ? int $1 : undef };
+    my $links = $self->_build_tourn_links;
 
-    my $player = sub {
-        m/^([a-zA-Z0-9]+)(?: \[([^\]]+)\])?$/ 
-            ? { name => $1, $2 ? (rank => $2) : () }
-            : undef;
-    };
+    my $name = sub { s/ Round \d+ Games$// };
+    my $round = sub { m/ Round (\d+) Games$/ && $1 };
+    
+    my %player = (
+        name => [ 'TEXT', sub { s/ \[[^\]]+\]$// } ],
+        rank => [ 'TEXT', sub { m/ \[([^\]]+)\]$/ && $1 } ],
+    );
 
     my $game = scraper {
         process '//td[1]/a', 'sgf_uri' => '@href';
-        process '//td[2]', 'white' => [ 'TEXT', $player ];
-        process '//td[3]', 'black' => [ 'TEXT', $player ];
+        process '//td[2]', 'white' => \%player;
+        process '//td[3]', 'black' => \%player;
         process '//td[3]', 'maybe_bye' => 'TEXT';
         process '//td[4]', 'setup' => 'TEXT';
         process '//td[5]', 'start_time' => [ 'TEXT', \&datetime ];
@@ -36,7 +37,7 @@ sub _build_scraper {
                 'games[]' => $game;
         process '//a[text()="Previous round"]', 'previous_round_uri' => '@href';
         process '//a[text()="Next round"]', 'next_round_uri' => '@href';
-        process_links;
+        process '//div[@class="tournData"]', 'links' => $links; 
     };
 }
 

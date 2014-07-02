@@ -93,6 +93,11 @@ sub from {
     $self->user_agent->default_header( 'From', @args );
 }
 
+sub get {
+    my ( $self, @args ) = @_;
+    $self->user_agent->get( @args );
+}
+
 sub _scrapers {
     my $self = shift;
     $self->{_scrapers} ||= $self->__build_scrapers;
@@ -128,7 +133,7 @@ sub scrape {
     my $uri = $self->_build_uri( $arg );
     my $path = $uri =~ m{^https?://www\.gokgs\.com/} && $uri->path;
     my $scraper = $path && $self->get_scraper( $path );
-    return $scraper->scrape( $uri ) if $scraper;
+    return $scraper->scrape( $self->get($uri) ) if $scraper;
     croak "Don't know how to scrape '$arg'";
 }
 
@@ -285,6 +290,15 @@ the From request header that indicates who is making the request.
 
 Can be used to get or set the product token that is used to send
 the User-Agent request header.
+
+=item $Response = $gokgs->get( URI->new(...) )
+
+A shortcut for:
+
+  my $response = $gokgs->user_agent->get( URI->new(...) );
+
+This method is used by C<scrape> method to C<GET> the requested resource.
+You can override this method by subclassing.
 
 =item $bool = $gokgs->can_scrape( '/fooBar.jsp' )
 
