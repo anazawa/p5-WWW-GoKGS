@@ -1,6 +1,6 @@
 package WWW::GoKGS::Scraper::TournGames;
 use strict;
-use warnings FATAL => 'all';
+use warnings;
 use parent qw/WWW::GoKGS::Scraper/;
 use WWW::GoKGS::Scraper::Declare;
 use WWW::GoKGS::Scraper::Filters qw/datetime game_result/;
@@ -8,9 +8,9 @@ use WWW::GoKGS::Scraper::TournLinks;
 
 sub base_uri { 'http://www.gokgs.com/tournGames.jsp' }
 
-sub _build_scraper {
+sub __build_scraper {
     my $self = shift;
-    my $links = $self->_build_tourn_links;
+    my $links = $self->__build_tourn_links;
 
     my $name = sub { s/ Round \d+ Games$// };
     my $round = sub { m/ Round (\d+) Games$/ && $1 };
@@ -63,8 +63,8 @@ sub scrape {
 
     for my $game ( @games ) {
         $game->{setup}      =~ /^(\d+)\x{d7}\d+ (?:H(\d+))?$/;
-        $game->{board_size} = int $1;
-        $game->{handicap}   = int $2 if $2;
+        $game->{board_size} = $1;
+        $game->{handicap}   = $2 if defined $2;
 
         delete $game->{setup};
     }

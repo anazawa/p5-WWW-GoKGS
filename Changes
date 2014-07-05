@@ -1,5 +1,15 @@
 Revision history for Perl extension WWW::GoKGS.
 
+  - Add WWW::GoKGS#get
+
+  [DOCUMENTATION]
+
+    - Add "DIAGNOSTICS"
+
+  [INTERNAL]
+
+    - Rename WWW::GoKGS::Scrape#_build_scraper to #__build_scraper
+
 0.17 Jul 2nd, 2014
 
   - WWW::GoKGS uses HTML::TreeBuilder::LibXML instead of

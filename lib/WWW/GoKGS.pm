@@ -124,17 +124,16 @@ sub each_scraper {
 sub can_scrape {
     my $self = shift;
     my $uri = $self->_build_uri( shift );
-    my $path = $uri =~ m{^https?://www\.gokgs\.com/} && $uri->path;
-    $path && exists $self->_scrapers->{$path};
+    my $path = $uri =~ m{^http://www\.gokgs\.com(?::80)?/} && $uri->path;
+    $path && $self->get_scraper( $path );
 }
 
 sub scrape {
     my ( $self, $arg ) = @_;
     my $uri = $self->_build_uri( $arg );
-    my $path = $uri =~ m{^https?://www\.gokgs\.com/} && $uri->path;
-    my $scraper = $path && $self->get_scraper( $path );
-    return $scraper->scrape( $self->get($uri) ) if $scraper;
-    croak "Don't know how to scrape '$arg'";
+    my $scraper = $self->can_scrape( $uri );
+    croak "Don't know how to scrape '$arg'" unless $scraper;
+    $scraper->scrape( $self->get($uri), $uri );
 }
 
 sub _build_uri {
@@ -300,12 +299,14 @@ A shortcut for:
 This method is used by C<scrape> method to C<GET> the requested resource.
 You can override this method by subclassing.
 
-=item $bool = $gokgs->can_scrape( '/fooBar.jsp' )
+=item $scraper = $gokgs->can_scrape( '/fooBar.jsp' )
 
-=item $bool = $gokgs->can_scrape( 'http://www.gokgs.com/fooBar.jsp' )
+=item $scraper = $gokgs->can_scrape( 'http://www.gokgs.com/fooBar.jsp' )
 
-Returns a Boolean value telling whether C<$gokgs> can C<scrape> the resource
-specified by the given URL.
+Returns a scraper object which can C<scrape> the resource specified
+by the given URL. If the scraper object does not exist, then C<undef>
+is returned. This method can be used to check whether C<$gokgs> can C<scrape>
+the resource.
 
 =item $HashRef = $gokgs->scrape( '/gameArchives.jsp?user=foo' )
 
@@ -398,6 +399,38 @@ on KGS and the scraper object which can scrape the resource.
 
 =back
 
+=head1 DIAGNOSTICS
+
+This module throws the following exceptions:
+
+=over 4
+
+=item LWP::RobotUA from required
+
+This message is printed by the constructor of L<LWP::RobotUA>.
+You must provide your email address when you use the module.
+
+  my $gokgs = WWW::GoKGS->new(
+      from => 'user@example.com'
+  );
+
+=item Don't know how to scrape '/fooBar.jsp'
+
+You tried to C<scrape> a resource which C<$gokgs> can't handle.
+Use C<can_scrape> before invoke the C<scrape> method.
+
+  # scrape safely
+  if ( $gokgs->can_scrape('/fooBar.jsp') ) {
+      my $result = $gokgs->scrape('/fooBar.jsp');
+  }
+
+=item GET /fooBar.jsp failed: ...
+
+C<$gokgs> failed to C<GET> the requested resource.
+The reason phrase is added to the end of the message.
+
+=back
+
 =head1 ENVIRONMENTAL VARIABLES
 
 =over 4
@@ -405,7 +438,7 @@ on KGS and the scraper object which can scrape the resource.
 =item WWW_GOKGS_LIBXML
 
 If set to true, this module uses L<HTML::TreeBuilder::LibXML>
-instead of L<HTML::TreeBuilder> to parse HTML documents.
+instead of L<HTML::TreeBuilder::XPath> to parse HTML documents.
 Make sure to install the alternative module in addition to this module
 before you enable the flag.
 

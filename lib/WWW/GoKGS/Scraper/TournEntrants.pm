@@ -8,9 +8,9 @@ use WWW::GoKGS::Scraper::TournLinks;
 
 sub base_uri { 'http://www.gokgs.com/tournEntrants.jsp' }
 
-sub _build_scraper {
+sub __build_scraper {
     my $self = shift;
-    my $links = $self->_build_tourn_links;
+    my $links = $self->__build_tourn_links;
 
     my $name = sub { s/ \[[^\]]+\]$// };
     my $rank = sub { m/ \[([^\]]+)\]$/ && $1 };
