@@ -1,5 +1,7 @@
 Revision history for Perl extension WWW::GoKGS.
 
+0.18 Jul 6th, 2014
+
   - Add WWW::GoKGS#get
 
   [DOCUMENTATION]

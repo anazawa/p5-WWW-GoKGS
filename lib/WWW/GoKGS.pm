@@ -12,7 +12,7 @@ use WWW::GoKGS::Scraper::TournInfo;
 use WWW::GoKGS::Scraper::TournEntrants;
 use WWW::GoKGS::Scraper::TournGames;
 
-our $VERSION = '0.17';
+our $VERSION = '0.18';
 
 BEGIN { # install scrapers
     my %scrapers = (
@@ -125,7 +125,7 @@ sub can_scrape {
     my $self = shift;
     my $uri = $self->_build_uri( shift );
     my $path = $uri =~ m{^http://www\.gokgs\.com(?::80)?/} && $uri->path;
-    $path && $self->get_scraper( $path );
+    $path ? $self->get_scraper( $path ) : undef;
 }
 
 sub scrape {

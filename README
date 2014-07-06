@@ -228,6 +228,14 @@ DIAGNOSTICS
         $gokgs failed to "GET" the requested resource. The reason phrase is
         added to the end of the message.
 
+LIMITATIONS
+    Although KGS website allows you to set a locale and time zone by using
+    HTTP cookie, this module ignores the settings. The scrapers assume the
+    locale is set to "en_US", and the time zone "GMT".
+
+      # not supported
+      $gokgs->user_agent->cookie_jar(...);
+
 ENVIRONMENTAL VARIABLES
     WWW_GOKGS_LIBXML
         If set to true, this module uses HTML::TreeBuilder::LibXML instead
