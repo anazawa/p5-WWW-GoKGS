@@ -1,6 +1,6 @@
 package WWW::GoKGS::Scraper::GameArchives;
 use strict;
-use warnings FATAL => 'all';
+use warnings;
 use parent qw/WWW::GoKGS::Scraper/;
 use WWW::GoKGS::Scraper::Declare;
 use WWW::GoKGS::Scraper::Filters qw/game_result datetime/;

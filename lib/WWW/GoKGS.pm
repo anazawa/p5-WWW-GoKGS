@@ -431,6 +431,15 @@ The reason phrase is added to the end of the message.
 
 =back
 
+=head1 LIMITATIONS
+
+Although KGS website allows you to set a locale and time zone
+by using HTTP cookie, this module ignores the settings.
+The scrapers assume the locale is set to C<en_US>, and the time zone C<GMT>.
+
+  # not supported
+  $gokgs->user_agent->cookie_jar(...);
+
 =head1 ENVIRONMENTAL VARIABLES
 
 =over 4

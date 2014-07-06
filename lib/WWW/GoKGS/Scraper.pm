@@ -54,7 +54,7 @@ sub scrape {
 
 sub query {
     my ( $self, @query ) = @_;
-    $self->scrape_uri( ref($self)->build_uri(@query) );
+    $self->scrape( ref($self)->build_uri(@query) );
 }
 
 1;
@@ -72,7 +72,7 @@ WWW::GoKGS::Scraper - Abstract base class for KGS scrapers
 
   sub base_uri { 'http://www.gokgs.com/...' }
 
-  sub _build_scraper {
+  sub __build_scraper {
       my $self = shift;
 
       scraper {
