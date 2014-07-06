@@ -3,6 +3,7 @@ use 5.008_009;
 use strict;
 use warnings;
 use Carp qw/croak/;
+use HTML::TreeBuilder::XPath;
 use LWP::RobotUA;
 use URI;
 use WWW::GoKGS::Scraper::GameArchives;
@@ -34,10 +35,12 @@ BEGIN { # install scrapers
 
     sub __build_scrapers {
         my $self = shift;
+        my $class = ref $self;
 
         my %_scrapers;
-        while ( my ($class, $path) = each %paths ) {
-            $_scrapers{$path} = $class->new(
+        while ( my ($scraper, $path) = each %paths ) {
+            $_scrapers{$path} = $scraper->new(
+                tree_builder_class => $class->tree_builder_class,
                 user_agent => $self->user_agent,
             );
         }
@@ -45,6 +48,8 @@ BEGIN { # install scrapers
         \%_scrapers;
     }
 }
+
+sub tree_builder_class { 'HTML::TreeBuilder::XPath' }
 
 sub new {
     my $class = shift;

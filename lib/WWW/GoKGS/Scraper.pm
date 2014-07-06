@@ -28,7 +28,9 @@ sub new {
 sub init {
     my ( $self, $args ) = @_;
 
-    $self->user_agent( $args->{user_agent} ) if exists $args->{user_agent};
+    for my $method (qw/user_agent tree_builder_class/) {
+        $self->$method( $args->{$method} ) if exists $args->{$method};
+    }
 
     return;
 }
@@ -40,6 +42,11 @@ sub _scraper {
 
 sub __build_scraper {
     croak 'call to abstract method ', __PACKAGE__, '::__build_scraper';
+}
+
+sub tree_builder_class {
+    my ( $self, @args ) = @_;
+    $self->_scraper->tree_builder_class( @args );
 }
 
 sub user_agent {

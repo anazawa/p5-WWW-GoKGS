@@ -42,7 +42,7 @@ sub __build_tourn_links {
     };
 
     scraper {
-        process '//ul[1]//li//a', 'entrants[]' => \%entrants;
+        process '//ul[1]//li/a', 'entrants[]' => \%entrants;
         process '//ul[2]//li', 'rounds[]' => $round;
     };
 }
