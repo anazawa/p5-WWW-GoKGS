@@ -35,10 +35,10 @@ sub __build_tourn_links {
     );
 
     my $round = scraper {
-        process '.', 'round' => [ 'TEXT', sub { m/^Round (\d+) / && $1 } ];
-        process '.', 'start_time' => [ 'TEXT', @start_time ];
-        process 'a', 'end_time' => [ 'TEXT', @end_time ];
-        process 'a', 'uri' => '@href';
+        process '.', 'round' => [ 'TEXT', sub { m/^Round (\d+) / && $1 } ],
+                     'start_time' => [ 'TEXT', @start_time ];
+        process 'a', 'end_time' => [ 'TEXT', @end_time ],
+                     'uri' => '@href';
     };
 
     scraper {
