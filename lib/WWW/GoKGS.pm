@@ -13,7 +13,7 @@ use WWW::GoKGS::Scraper::TournInfo;
 use WWW::GoKGS::Scraper::TournEntrants;
 use WWW::GoKGS::Scraper::TournGames;
 
-our $VERSION = '0.18';
+our $VERSION = '0.19';
 
 sub _tree_builder_class { 'HTML::TreeBuilder::XPath' }
 
