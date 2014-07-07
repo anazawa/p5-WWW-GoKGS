@@ -14,7 +14,7 @@ __END__
 
 =head1 NAME
 
-WWW::GoKGS::LibXML - HTML::TreeBuilder::LibXML backend for WWW::GoKGS
+WWW::GoKGS::LibXML - HTML::TreeBuilder::LibXML-based WWW::GoKGS
 
 =head1 SYNOPSIS
 
