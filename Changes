@@ -1,5 +1,7 @@
 Revision history for Perl extension WWW::GoKGS.
 
+0.20 Jul 14th, 2014
+
   - Add WWW::GoKGS::Scraper::TzList
   - Add WWW::GoKGS#cookie_jar
 

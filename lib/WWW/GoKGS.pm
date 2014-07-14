@@ -14,7 +14,7 @@ use WWW::GoKGS::Scraper::TournEntrants;
 use WWW::GoKGS::Scraper::TournGames;
 use WWW::GoKGS::Scraper::TzList;
 
-our $VERSION = '0.19';
+our $VERSION = '0.20';
 
 sub _tree_builder_class { 'HTML::TreeBuilder::XPath' }
 
