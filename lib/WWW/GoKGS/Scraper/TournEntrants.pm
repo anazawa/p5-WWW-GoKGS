@@ -134,6 +134,7 @@ WWW::GoKGS::Scraper::TournEntrants - KGS Tournament Entrants
   );
   # => {
   #     name => 'KGS Meijin Qualifier October 2012',
+  #     time_zone => 'GMT',
   #     entrants => [
   #         {
   #             name     => 'foo',
@@ -156,8 +157,8 @@ WWW::GoKGS::Scraper::TournEntrants - KGS Tournament Entrants
   #         rounds => [
   #             {
   #                 round      => 1,
-  #                 start_time => '2012-10-27T16:05Z',
-  #                 end_time   => '2012-10-27T18:05Z',
+  #                 start_time => '2012-10-27T16:05',
+  #                 end_time   => '2012-10-27T18:05',
   #                 uri        => '/tournGames.jsp?id=762&round=1',
   #             },
   #             ...

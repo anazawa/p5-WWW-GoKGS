@@ -65,8 +65,8 @@ WWW::GoKGS::Scraper::TournInfo - Information for the KGS tournament
   #         rounds => [
   #             {
   #                 round      => 1,
-  #                 start_time => '2012-10-27T16:05Z',
-  #                 end_time   => '2012-10-27T18:35Z',
+  #                 start_time => '2012-10-27T16:05',
+  #                 end_time   => '2012-10-27T18:35',
   #                 uri        => '/tournGames.jsp?id=762&round=1'
   #             },
   #             ...
