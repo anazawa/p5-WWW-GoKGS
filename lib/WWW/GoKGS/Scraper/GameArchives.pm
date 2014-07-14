@@ -43,6 +43,7 @@ sub __build_scraper {
     };
 
     scraper {
+        process '//a[@href="tzList.jsp"]', 'time_zone' => 'TEXT';
         process '//table[tr/th/text()="Viewable?"]//following-sibling::tr',
                 'games[]' => $game;
         process '//a[contains(@href, ".zip")]', 'zip_uri' => '@href';

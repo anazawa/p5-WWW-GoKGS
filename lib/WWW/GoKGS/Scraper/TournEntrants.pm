@@ -19,6 +19,7 @@ sub __build_scraper {
 
     scraper {
         process '//h1', 'name' => [ 'TEXT', sub { s/ Players$// } ];
+        process '//a[@href="tzList.jsp"]', 'time_zone' => 'TEXT';
         process '//table[tr/th[3]/text()="Score"]//following-sibling::tr',
                 'entrants[]' => scraper { # Swiss or McMahon
                     process '//td[1]', 'position' => 'TEXT';

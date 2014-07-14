@@ -13,6 +13,7 @@ sub __build_scraper {
 
     scraper {
         process '//h1', 'name' => [ 'TEXT', sub { s/ \([^)]+\)$// } ];
+        process '//a[@href="tzList.jsp"]', 'time_zone' => 'TEXT';
         process '//node()[preceding-sibling::h1 and following-sibling::div]',
                 'description[]' => sub { $_[0]->as_XML };
         process '//div[@class="tournData"]', 'links' => $links; 

@@ -12,6 +12,7 @@ use WWW::GoKGS::Scraper::TournList;
 use WWW::GoKGS::Scraper::TournInfo;
 use WWW::GoKGS::Scraper::TournEntrants;
 use WWW::GoKGS::Scraper::TournGames;
+use WWW::GoKGS::Scraper::TzList;
 
 our $VERSION = '0.19';
 
@@ -41,6 +42,7 @@ sub init {
             LWP::RobotUA->new(
                 agent => $args->{agent} || "$class/" . $class->VERSION,
                 from => $args->{from},
+                cookie_jar => $args->{cookie_jar},
             )
         );
     }
@@ -64,6 +66,11 @@ sub from {
     $self->user_agent->default_header( 'From', @args );
 }
 
+sub cookie_jar {
+    my ( $self, @args ) = @_;
+    $self->user_agent->cookie_jar( @args );
+}
+
 sub get {
     my ( $self, @args ) = @_;
     $self->user_agent->get( @args );
@@ -82,6 +89,7 @@ BEGIN { # install scrapers
         tourn_info     => 'WWW::GoKGS::Scraper::TournInfo',
         tourn_entrants => 'WWW::GoKGS::Scraper::TournEntrants',
         tourn_games    => 'WWW::GoKGS::Scraper::TournGames',
+        tz_list        => 'WWW::GoKGS::Scraper::TzList',
     );
 
     my %paths;

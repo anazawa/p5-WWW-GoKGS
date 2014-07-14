@@ -34,6 +34,7 @@ sub __build_scraper {
 
     scraper {
         process '//h1', %h1;
+        process '//a[@href="tzList.jsp"]', 'time_zone' => 'TEXT';
         process '//table[@class="grid"]//following-sibling::tr',
                 'games[]' => $game;
         process '//a[text()="Previous round"]', 'previous_round_uri' => '@href';
