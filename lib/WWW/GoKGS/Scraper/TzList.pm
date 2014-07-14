@@ -11,7 +11,7 @@ sub __build_scraper {
 
     scraper {
         process '//option', 'time_zones[]' => {
-                    # tzdata-compatible name of time zone (maybe)
+                    # tzdata-compatible name of time zone (maybe or maybe not)
                     name => sub { $_[0]->attr('value') },
                     # java.util.TimeZone's getDisplayName (long version, maybe)
                     # obviously useless, but harmless :)
@@ -26,7 +26,7 @@ sub scrape {
 
     for my $time_zone ( @{$result->{time_zones}} ) {
         next unless delete $time_zone->{selected};
-        $result->{current_time_zone} = $time_zone->{name};
+        $result->{current_time_zone} = { %$time_zone };
     }
 
     $result;
@@ -48,7 +48,10 @@ WWW::GoKGS::Scraper::TzList - KGS Time Zone Selector
 
   my $result = $tz_list->query( tz => 'Asia/Tokyo' );
   # => {
-  #     current_time_zone => 'Asia/Tokyo',
+  #     current_time_zone => {
+  #         name => 'Asia/Tokyo',
+  #         display_name => 'Japan Standard Time'
+  #     },
   #     time_zones => [
   #         {
   #             name => 'America/Anchorage',
@@ -95,7 +98,10 @@ Returns a hash reference which contains your current time zone
 and a list of available time zones. The hashref is formatted as follows:
 
   {
-      current_time_zone => 'Asia/Tokyo',
+      current_time_zone => {
+          name => 'Asia/Tokyo',
+          display_name => 'Japan Standard Time'
+      },
       time_zones => [
           {
               name => 'America/Anchorage',
