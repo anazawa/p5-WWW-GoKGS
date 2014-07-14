@@ -197,6 +197,10 @@ WWW::GoKGS - KGS Go Server (http://www.gokgs.com/) Scraper
   my $tourn_games_1 = $gokgs->scrape( '/tournGames.jsp?id=123&round=1' );
   my $tourn_games_2 = $gokgs->tourn_games->query( id => 123, round => 1 );
 
+  # List of time zones
+  my $tz_list_1 = $gokgs->scrape( '/tzList.jsp' );
+  my $tz_list_2 = $gokgs->tz_list->query;
+
 =head1 DESCRIPTION
 
 This module is a KGS Go Server (C<http://www.gokgs.com/>) scraper.
@@ -225,6 +229,10 @@ Handled by L<WWW::GoKGS::Scraper::TournList>,
 L<WWW::GoKGS::Scraper::TournInfo>,
 L<WWW::GoKGS::Scraper::TournEntrants> and
 L<WWW::GoKGS::Scraper::TournGames>.
+
+=item KGS Time Zone Selector (http://www.gokgs.com/tzList.jsp)
+
+Handled by L<WWW::GoKGS::Scraper::TzList>.
 
 =back
 
@@ -283,6 +291,10 @@ Returns a L<WWW::GoKGS::Scraper::TournEntrants> object.
 
 Returns a L<WWW::GoKGS::Scraper::TournGames> object.
 
+=item $TzList = $gokgs->tz_list
+
+Returns a L<WWW::GoKGS::Scraper::TzList> object.
+
 =back
 
 =head2 INSTANCE METHODS
@@ -311,6 +323,12 @@ A shortcut for:
 
 This method is used by C<scrape> method to C<GET> the requested resource.
 You can override this method by subclassing.
+
+=item $cookie_jar = $gokgs->cookie_jar
+
+=item $gokgs->cookie_jar( $cookie_jar_obj )
+
+Can be used to get or set a cookie jar object to use.
 
 =item $scraper = $gokgs->can_scrape( '/fooBar.jsp' )
 
@@ -386,6 +404,17 @@ A shortcut for:
   my $tourn_games = $gokgs->tourn_games->scrape( $uri );
 
 See L<WWW::GoKGS::Scraper::TournGames> for details.
+
+=item $HashRef = $gokgs->scrape( '/tzList.jsp' )
+
+=item $HashRef = $gokgs->scrape( 'http://www.gokgs.com/tzList.jsp' )
+
+A shortcut for:
+
+  my $uri = URI->new( 'http://www.gokgs.com/tzList.jsp' );
+  my $tz_list = $gokgs->tz_list->scrape( $uri );
+
+See L<WWW::GoKGS::Scraper::TzList> for details.
 
 =item $scraper = $gokgs->get_scraper( $path )
 
