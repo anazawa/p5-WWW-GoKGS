@@ -51,6 +51,7 @@ WWW::GoKGS::Scraper::TournInfo - Information for the KGS tournament
   );
   # => {
   #     name => 'KGS Meijin Qualifier October 2012',
+  #     notes => 'Winner: foo',
   #     description => 'Welcome to the KGS Meijin October Qualifier! ...',
   #     links => {
   #         entrants => [
